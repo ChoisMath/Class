@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}관리자 대시보드 - 학습 관리 시스템{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>🛡️ 관리자 대시보드</h1>
+            <p class="text-muted">시스템 전체 현황을 한눈에 확인하세요.</p>
+        </div>
+        <div class="col text-right">
+            <a href="{{ url_for('admin.logout_admin') }}" class="btn btn-secondary">
+                🚪 관리자 모드 종료
+            </a>
+        </div>
+    </div>
+
+    <!-- 통계 카드 -->
+    <div class="dashboard-grid">
+        <div class="stat-card" style="background: linear-gradient(135deg, #4285f4, #3367d6);">
+            <div class="stat-number">{{ stats.total_users }}</div>
+            <div class="stat-label">전체 사용자</div>
+        </div>
+        
+        <div class="stat-card" style="background: linear-gradient(135deg, #34a853, #2e7d3c);">
+            <div class="stat-number">{{ stats.total_students }}</div>
+            <div class="stat-label">학생</div>
+        </div>
+        
+        <div class="stat-card" style="background: linear-gradient(135deg, #fbbc04, #f9ab00);">
+            <div class="stat-number">{{ stats.total_teachers }}</div>
+            <div class="stat-label">교사</div>
+        </div>
+        
+        <div class="stat-card" style="background: linear-gradient(135deg, #ea4335, #d33b2c);">
+            <div class="stat-number">{{ stats.total_admins }}</div>
+            <div class="stat-label">관리자</div>
+        </div>
+        
+        <div class="stat-card" style="background: linear-gradient(135deg, #9aa0a6, #80868b);">
+            <div class="stat-number">{{ stats.active_users }}</div>
+            <div class="stat-label">활성 사용자</div>
+        </div>
+    </div>
+
+    <!-- 주요 기능 -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3>👤 사용자 관리</h3>
+                </div>
+                <div class="card-body">
+                    <p>시스템 사용자들의 계정을 관리하고 권한을 설정합니다.</p>
+                    <div class="btn-group">
+                        <a href="{{ url_for('admin.users') }}" class="btn btn-primary">
+                            📋 사용자 목록
+                        </a>
+                        <a href="{{ url_for('admin.create_user') }}" class="btn btn-success">
+                            ➕ 사용자 추가
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3>⚙️ 시스템 관리</h3>
+                </div>
+                <div class="card-body">
+                    <p>시스템 설정과 데이터베이스를 관리합니다.</p>
+                    <div class="btn-group">
+                        <a href="{{ url_for('admin.system') }}" class="btn btn-primary">
+                            🔧 시스템 설정
+                        </a>
+                        <a href="{{ url_for('admin.backup') }}" class="btn btn-warning">
+                            💾 백업 관리
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3>📊 리포트</h3>
+                </div>
+                <div class="card-body">
+                    <p>시스템 사용 현황과 통계를 확인합니다.</p>
+                    <a href="{{ url_for('admin.reports') }}" class="btn btn-primary">
+                        📈 리포트 보기
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3>📝 시스템 로그</h3>
+                </div>
+                <div class="card-body">
+                    <p>시스템 로그와 활동 내역을 조회합니다.</p>
+                    <a href="{{ url_for('admin.logs') }}" class="btn btn-primary">
+                        🔍 로그 보기
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 빠른 액션 -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h3>⚡ 빠른 액션</h3>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <strong>💡 팁:</strong> 관리자 기능은 환경변수 <code>ADMIN_PASSWORD</code>로 보호됩니다. 
+                현재 비밀번호: <code>admin</code>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-outline-primary" onclick="refreshStats()">
+                    🔄 통계 새로고침
+                </button>
+                <button class="btn btn-outline-warning" onclick="systemCheck()">
+                    🔍 시스템 점검
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-group .btn {
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+</style>
+
+<script>
+function refreshStats() {
+    location.reload();
+}
+
+function systemCheck() {
+    alert('시스템 점검 기능은 개발 중입니다.');
+}
+</script>
+{% endblock %}

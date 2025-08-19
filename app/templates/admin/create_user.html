@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}사용자 생성 - 관리자{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>➕ 새 사용자 생성</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">관리자 대시보드</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.users') }}">사용자 관리</a></li>
+                    <li class="breadcrumb-item active">새 사용자 생성</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3>사용자 정보 입력</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST" data-validate>
+                <!-- 기본 정보 -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="alert alert-info">
+                            <strong>💡 정보:</strong> 이제 이메일 주소만으로 사용자를 인증합니다. 
+                            Google ID는 첫 로그인 시 자동으로 설정됩니다.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="email" class="form-label">이메일 주소 *</label>
+                            <input type="email" class="form-control" id="email" name="email" required 
+                                   placeholder="user@example.com">
+                            <small class="form-text text-muted">이 이메일로 Google 로그인 시 접근 가능합니다.</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="name" class="form-label">이름 *</label>
+                            <input type="text" class="form-control" id="name" name="name" required 
+                                   placeholder="홍길동">
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="role" class="form-label">역할 *</label>
+                            <select class="form-control" id="role" name="role" required onchange="toggleProfileFields()">
+                                <option value="">역할을 선택하세요</option>
+                                <option value="student">학생</option>
+                                <option value="teacher">교사</option>
+                                <option value="admin">관리자</option>
+                                <option value="super_admin">최고관리자</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <div class="form-check" style="margin-top: 2rem;">
+                                <input type="checkbox" class="form-check-input" id="is_active" name="is_active" checked>
+                                <label class="form-check-label" for="is_active">
+                                    계정 활성화
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- 학생 전용 필드 -->
+                <div id="student_fields" style="display: none;">
+                    <h4 class="mt-4 mb-3">📚 학생 정보</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="student_id" class="form-label">학번</label>
+                                <input type="text" class="form-control" id="student_id" name="student_id" 
+                                       placeholder="2024001">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="grade" class="form-label">학년</label>
+                                <select class="form-control" id="grade" name="grade">
+                                    {% for i in range(1, 13) %}
+                                    <option value="{{ i }}">{{ i }}학년</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="class_number" class="form-label">반</label>
+                                <input type="number" class="form-control" id="class_number" name="class_number" 
+                                       min="1" value="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="admission_year" class="form-label">입학년도</label>
+                                <input type="number" class="form-control" id="admission_year" name="admission_year" 
+                                       min="1900" max="2030" value="2024">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="department" class="form-label">학과/전공</label>
+                                <input type="text" class="form-control" id="department" name="department" 
+                                       placeholder="컴퓨터과학과">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="phone" class="form-label">연락처</label>
+                                <input type="text" class="form-control" id="phone" name="phone" 
+                                       placeholder="010-0000-0000">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="parent_phone" class="form-label">보호자 연락처</label>
+                                <input type="text" class="form-control" id="parent_phone" name="parent_phone" 
+                                       placeholder="010-0000-0000">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 교사 전용 필드 -->
+                <div id="teacher_fields" style="display: none;">
+                    <h4 class="mt-4 mb-3">👩‍🏫 교사 정보</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="employee_id" class="form-label">직원번호</label>
+                                <input type="text" class="form-control" id="employee_id" name="employee_id" 
+                                       placeholder="T2024001">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="subject" class="form-label">담당교과</label>
+                                <input type="text" class="form-control" id="subject" name="subject" 
+                                       placeholder="수학">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="responsibility" class="form-label">담당업무</label>
+                                <input type="text" class="form-control" id="responsibility" name="responsibility" 
+                                       placeholder="3학년 담임">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="position" class="form-label">직위</label>
+                                <select class="form-control" id="position" name="position">
+                                    <option value="">직위를 선택하세요</option>
+                                    <option value="교사">교사</option>
+                                    <option value="부장교사">부장교사</option>
+                                    <option value="교감">교감</option>
+                                    <option value="교장">교장</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="office_location" class="form-label">사무실 위치</label>
+                                <input type="text" class="form-control" id="office_location" name="office_location" 
+                                       placeholder="본관 3층 교무실">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="teacher_phone" class="form-label">연락처</label>
+                                <input type="text" class="form-control" id="teacher_phone" name="phone" 
+                                       placeholder="010-0000-0000">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 버튼 -->
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        ✅ 사용자 생성
+                    </button>
+                    <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">
+                        ❌ 취소
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleProfileFields() {
+    const role = document.getElementById('role').value;
+    const studentFields = document.getElementById('student_fields');
+    const teacherFields = document.getElementById('teacher_fields');
+    
+    // 모든 프로필 필드 숨김
+    studentFields.style.display = 'none';
+    teacherFields.style.display = 'none';
+    
+    // 선택된 역할에 따라 해당 필드 표시
+    if (role === 'student') {
+        studentFields.style.display = 'block';
+    } else if (role === 'teacher') {
+        teacherFields.style.display = 'block';
+    }
+}
+</script>
+
+<style>
+.breadcrumb {
+    background-color: transparent;
+    padding: 0;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.card {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+h4 {
+    color: #4285f4;
+    border-bottom: 2px solid #e8f0fe;
+    padding-bottom: 0.5rem;
+}
+</style>
+{% endblock %}

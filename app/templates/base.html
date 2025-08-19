@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block description %}학습 관리 시스템{% endblock %}">
+    
+    <!-- SEO 최적화 -->
+    <title>{% block title %}학습 관리 시스템{% endblock %}</title>
+    
+    <!-- 성능 최적화: DNS prefetch -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    
+    <!-- Critical CSS 인라인 -->
+    <style>
+        /* Critical path CSS - Above the fold 스타일만 포함 */
+        body { margin: 0; font-family: 'Roboto', sans-serif; }
+        .navbar { background: #fff; border-bottom: 1px solid #dadce0; padding: 1rem 0; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+    </style>
+    
+    <!-- Non-critical CSS - 지연 로딩 -->
+    <link rel="preload" href="{{ url_for('static', filename='css/main.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"></noscript>
+    
+    <!-- Google Fonts - 성능 최적화 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- 상단 네비게이션 -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="row" style="align-items: center;">
+                <div class="col">
+                    <a href="{{ url_for('main.index') }}" class="navbar-brand">
+                        📚 학습 관리 시스템
+                    </a>
+                </div>
+                <div class="col" style="flex: 0;">
+                    {% if current_user.is_authenticated %}
+                        <ul class="nav-links">
+                            {% if current_user.is_student() %}
+                                <li><a href="{{ url_for('student.dashboard') }}" class="nav-link">대시보드</a></li>
+                                <li><a href="{{ url_for('student.assignments') }}" class="nav-link">과제</a></li>
+                                <li><a href="{{ url_for('student.grades') }}" class="nav-link">성적</a></li>
+                            {% elif current_user.is_teacher() %}
+                                <li><a href="{{ url_for('teacher.dashboard') }}" class="nav-link">대시보드</a></li>
+                                <li><a href="{{ url_for('teacher.classes') }}" class="nav-link">클래스</a></li>
+                                <li><a href="{{ url_for('teacher.assignments') }}" class="nav-link">과제 관리</a></li>
+                            {% elif current_user.is_admin() %}
+                                <li><a href="{{ url_for('admin.dashboard') }}" class="nav-link">관리자 대시보드</a></li>
+                                <li><a href="{{ url_for('admin.users') }}" class="nav-link">사용자 관리</a></li>
+                            {% endif %}
+                            
+                            <!-- 사용자 메뉴 -->
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle">
+                                    {{ current_user.name }} ({{ current_user.get_role_name() }})
+                                </a>
+                                <div class="dropdown-menu">
+                                    <a href="{{ url_for('auth.profile') }}" class="dropdown-item">프로필</a>
+                                    <div class="dropdown-divider"></div>
+                                    <a href="{{ url_for('auth.logout') }}" class="dropdown-item">로그아웃</a>
+                                </div>
+                            </li>
+                        </ul>
+                    {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-primary">로그인</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 사이드바 (로그인한 사용자만) -->
+    {% if current_user.is_authenticated %}
+    <div class="sidebar">
+        <nav class="sidebar-nav">
+            <ul>
+                {% block sidebar %}
+                    {% if current_user.is_student() %}
+                        <li class="sidebar-item">
+                            <a href="{{ url_for('student.dashboard') }}" class="sidebar-link">
+                                📊 대시보드
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="{{ url_for('student.assignments') }}" class="sidebar-link">
+                                📝 과제
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="{{ url_for('student.grades') }}" class="sidebar-link">
+                                📈 성적
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="{{ url_for('student.schedule') }}" class="sidebar-link">
+                                📅 시간표
+                            </a>
+                        </li>
+                    {% elif current_user.is_teacher() %}
+                        <li class="sidebar-item">
+                            <a href="{{ url_for('teacher.dashboard') }}" class="sidebar-link">
+                                📊 대시보드
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="{{ url_for('teacher.classes') }}" class="sidebar-link">
+                                👥 클래스 관리
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="{{ url_for('teacher.assignments') }}" class="sidebar-link">
+                                📝 과제 관리
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="{{ url_for('teacher.grading') }}" class="sidebar-link">
+                                ✏️ 채점
+                            </a>
+                        </li>
+                    {% elif current_user.is_admin() %}
+                        <li class="sidebar-item">
+                            <a href="{{ url_for('admin.dashboard') }}" class="sidebar-link">
+                                📊 관리자 대시보드
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="{{ url_for('admin.users') }}" class="sidebar-link">
+                                👤 사용자 관리
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="{{ url_for('admin.system') }}" class="sidebar-link">
+                                ⚙️ 시스템 설정
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endblock %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+
+    <!-- 메인 콘텐츠 -->
+    <main class="main-content">
+        <!-- 알림 메시지 -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alerts">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'error' if category == 'error' else category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- 페이지 헤더 -->
+        {% block page_header %}{% endblock %}
+
+        <!-- 페이지 콘텐츠 -->
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="text-center">
+                <p>&copy; 2024 학습 관리 시스템. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript - 성능 최적화 -->
+    <!-- Critical JS는 head에, Non-critical JS는 body 끝에 -->
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+    
+    {% block extra_js %}{% endblock %}
+
+    <!-- Service Worker 등록 (향후 PWA 지원) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(function(registrationError) {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

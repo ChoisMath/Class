@@ -1,0 +1,129 @@
+from flask import render_template, redirect, url_for, request, session, flash, current_app
+from flask_login import login_user, logout_user, current_user, login_required
+from google.auth.transport.requests import Request
+from google.oauth2 import id_token
+from google_auth_oauthlib.flow import Flow
+import requests
+import os
+
+from . import auth_bp
+from app.models.user import User
+from app.services.supabase_service import supabase_service
+from app import db
+
+def get_client_secrets_config():
+    """Google OAuth 클라이언트 설정 반환"""
+    return {
+        "web": {
+            "client_id": current_app.config['GOOGLE_CLIENT_ID'],
+            "client_secret": current_app.config['GOOGLE_CLIENT_SECRET'],
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "redirect_uris": [url_for('auth.callback', _external=True)]
+        }
+    }
+
+@auth_bp.route('/login')
+def login():
+    """Google OAuth 로그인"""
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
+    
+    flow = Flow.from_client_config(
+        get_client_secrets_config(),
+        scopes=["https://www.googleapis.com/auth/userinfo.profile", 
+                "https://www.googleapis.com/auth/userinfo.email", 
+                "openid"],
+        redirect_uri=url_for('auth.callback', _external=True)
+    )
+    
+    authorization_url, state = flow.authorization_url()
+    session["state"] = state
+    return redirect(authorization_url)
+
+@auth_bp.route('/callback')
+def callback():
+    """Google OAuth 콜백 처리"""
+    try:
+        flow = Flow.from_client_config(
+            get_client_secrets_config(),
+            scopes=["https://www.googleapis.com/auth/userinfo.profile", 
+                    "https://www.googleapis.com/auth/userinfo.email", 
+                    "openid"],
+            redirect_uri=url_for('auth.callback', _external=True),
+            state=session["state"]
+        )
+        
+        flow.fetch_token(authorization_response=request.url)
+        
+        if not session["state"] == request.args.get("state"):
+            flash('인증 상태가 일치하지 않습니다.', 'error')
+            return redirect(url_for('auth.login'))
+        
+        credentials = flow.credentials
+        request_session = requests.session()
+        cached_session = Request(session=request_session)
+        
+        id_info = id_token.verify_oauth2_token(
+            id_token=credentials._id_token,
+            request=cached_session,
+            audience=current_app.config['GOOGLE_CLIENT_ID']
+        )
+        
+        # Supabase에서 이메일로 사용자 확인
+        user_email = id_info.get('email')
+        supabase_user = supabase_service.get_user_by_email(user_email)
+        
+        if not supabase_user:
+            flash(f'등록되지 않은 이메일입니다: {user_email}\n관리자에게 문의하세요.', 'error')
+            return redirect(url_for('auth.login'))
+        
+        if not supabase_user.get('is_active'):
+            flash('비활성화된 계정입니다. 관리자에게 문의하세요.', 'error')
+            return redirect(url_for('auth.login'))
+        
+        # Google ID 업데이트 (처음 로그인 시 또는 변경된 경우)
+        if supabase_user.get('google_id') != id_info.get('sub'):
+            supabase_service.update_user(supabase_user['id'], {
+                'google_id': id_info.get('sub'),
+                'profile_image': id_info.get('picture')
+            })
+        
+        # Flask-Login용 로컬 사용자 생성/업데이트
+        user = User.create_or_update_from_supabase(supabase_user)
+        
+        # 로그인 처리
+        login_user(user, remember=True)
+        
+        # Supabase에서 마지막 로그인 시간 업데이트
+        supabase_service.update_last_login(supabase_user['id'])
+        
+        flash(f'환영합니다, {user.name}님!', 'success')
+        
+        # 다음 페이지로 리디렉션 또는 역할별 대시보드로 이동
+        next_page = request.args.get('next')
+        if next_page:
+            return redirect(next_page)
+        
+        return redirect(url_for('main.index'))
+        
+    except Exception as e:
+        current_app.logger.error(f'OAuth callback error: {str(e)}')
+        flash('로그인 중 오류가 발생했습니다. 다시 시도해주세요.', 'error')
+        return redirect(url_for('auth.login'))
+
+@auth_bp.route('/logout')
+@login_required
+def logout():
+    """로그아웃"""
+    user_name = current_user.name
+    logout_user()
+    session.clear()
+    flash(f'{user_name}님, 안전하게 로그아웃되었습니다.', 'info')
+    return redirect(url_for('main.index'))
+
+@auth_bp.route('/profile')
+@login_required
+def profile():
+    """사용자 프로필 페이지"""
+    return render_template('auth/profile.html', user=current_user)

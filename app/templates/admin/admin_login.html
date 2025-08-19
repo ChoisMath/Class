@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}관리자 접속 - 학습 관리 시스템{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 500px; margin-top: 3rem;">
+    <div class="card">
+        <div class="card-header text-center">
+            <h3>🔐 관리자 모드 접속</h3>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <strong>주의:</strong> 관리자 모드에 접속하려면 관리자 비밀번호가 필요합니다.
+            </div>
+            
+            <form method="POST">
+                <div class="form-group">
+                    <label for="admin_password" class="form-label">관리자 비밀번호</label>
+                    <input type="password" 
+                           class="form-control" 
+                           id="admin_password" 
+                           name="admin_password" 
+                           required 
+                           placeholder="관리자 비밀번호를 입력하세요">
+                </div>
+                
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">
+                        🚀 관리자 모드 접속
+                    </button>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-secondary">
+                        취소
+                    </a>
+                </div>
+            </form>
+        </div>
+        
+        <div class="card-body text-center" style="border-top: 1px solid #dadce0; background: #f8f9fa;">
+            <small class="text-muted">
+                💡 <strong>개발자 참고:</strong><br>
+                관리자 비밀번호는 환경변수 <code>ADMIN_PASSWORD</code>에 설정되어 있습니다.<br>
+                현재 기본값: <code>admin</code>
+            </small>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.form-control:focus {
+    border-color: #4285f4;
+    box-shadow: 0 0 0 0.2rem rgba(66, 133, 244, 0.25);
+}
+
+.btn {
+    margin: 0.25rem;
+}
+</style>
+{% endblock %}

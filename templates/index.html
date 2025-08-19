@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}Google Login - Home{% endblock %}
+
+{% block content %}
+<h1>Google Login 앱에 오신 것을 환영합니다</h1>
+<p>Google 계정으로 로그인하여 클래스에 접속하세요.</p>
+<a href="{{ url_for('login') }}" class="btn">Google로 로그인</a>
+{% endblock %}
