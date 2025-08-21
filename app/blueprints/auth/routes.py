@@ -11,10 +11,26 @@ from app.models.user import User
 from app.services.supabase_service import supabase_service
 from app import db
 
+def get_base_url():
+    """환경별 기본 URL 생성"""
+    # Railway 프로덕션 환경
+    if os.getenv('RAILWAY_ENVIRONMENT'):
+        railway_domain = os.getenv('RAILWAY_STATIC_URL') or os.getenv('RAILWAY_PUBLIC_DOMAIN')
+        if railway_domain:
+            return f"https://{railway_domain}"
+        # Railway 동적 도메인 패턴
+        project_name = os.getenv('RAILWAY_PROJECT_NAME', 'testproject')
+        return f"https://{project_name}.up.railway.app"
+    
+    # 개발 환경
+    host = 'localhost'
+    port = int(os.getenv('PORT', 5000))
+    return f"http://{host}:{port}"
+
 def get_client_secrets_config():
     """Google OAuth 클라이언트 설정 반환"""
     # 환경별 기본 URL 생성
-    base_url = current_app.config['Config'].get_base_url()
+    base_url = get_base_url()
     callback_url = f"{base_url}/auth/callback"
     
     return {
@@ -34,7 +50,7 @@ def login():
         return redirect(url_for('main.index'))
     
     # 환경별 기본 URL 생성
-    base_url = current_app.config['Config'].get_base_url()
+    base_url = get_base_url()
     callback_url = f"{base_url}/auth/callback"
     
     flow = Flow.from_client_config(
@@ -53,9 +69,20 @@ def login():
 def callback():
     """Google OAuth 콜백 처리"""
     try:
+        current_app.logger.info(f'OAuth callback started - URL: {request.url}')
+        current_app.logger.info(f'Session state: {session.get("state")}')
+        current_app.logger.info(f'Request state: {request.args.get("state")}')
+        
+        # 상태 확인
+        if "state" not in session:
+            current_app.logger.error('No state in session')
+            flash('인증 세션이 만료되었습니다. 다시 로그인해주세요.', 'error')
+            return redirect(url_for('auth.login'))
+        
         # 환경별 기본 URL 생성 (로그인과 동일한 URL 사용)
-        base_url = current_app.config['Config'].get_base_url()
+        base_url = get_base_url()
         callback_url = f"{base_url}/auth/callback"
+        current_app.logger.info(f'Using callback URL: {callback_url}')
         
         flow = Flow.from_client_config(
             get_client_secrets_config(),
@@ -67,8 +94,10 @@ def callback():
         )
         
         flow.fetch_token(authorization_response=request.url)
+        current_app.logger.info('Token fetched successfully')
         
         if not session["state"] == request.args.get("state"):
+            current_app.logger.error(f'State mismatch: session={session["state"]}, request={request.args.get("state")}')
             flash('인증 상태가 일치하지 않습니다.', 'error')
             return redirect(url_for('auth.login'))
         
@@ -81,16 +110,22 @@ def callback():
             request=cached_session,
             audience=current_app.config['GOOGLE_CLIENT_ID']
         )
+        current_app.logger.info(f'ID token verified for email: {id_info.get("email")}')
         
         # Supabase에서 이메일로 사용자 확인
         user_email = id_info.get('email')
+        current_app.logger.info(f'Checking user in Supabase: {user_email}')
         supabase_user = supabase_service.get_user_by_email(user_email)
         
         if not supabase_user:
+            current_app.logger.warning(f'User not found in Supabase: {user_email}')
             flash(f'등록되지 않은 이메일입니다: {user_email}\n관리자에게 문의하세요.', 'error')
             return redirect(url_for('auth.login'))
         
-        if not supabase_user.get('is_active'):
+        # is_active가 None이거나 False인 경우만 체크 (기본값 true 처리)
+        is_active = supabase_user.get('is_active', True)  # 기본값 True
+        if is_active is False:  # 명시적으로 False인 경우만
+            current_app.logger.warning(f'Inactive user: {user_email}')
             flash('비활성화된 계정입니다. 관리자에게 문의하세요.', 'error')
             return redirect(url_for('auth.login'))
         
@@ -120,7 +155,7 @@ def callback():
         return redirect(url_for('main.index'))
         
     except Exception as e:
-        current_app.logger.error(f'OAuth callback error: {str(e)}')
+        current_app.logger.error(f'OAuth callback error: {str(e)}', exc_info=True)
         flash('로그인 중 오류가 발생했습니다. 다시 시도해주세요.', 'error')
         return redirect(url_for('auth.login'))
 
