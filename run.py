@@ -20,7 +20,6 @@ def create_admin():
     """최고관리자 계정 생성 (테스트용)"""
     admin_email = input('관리자 이메일: ')
     admin_name = input('관리자 이름: ')
-    admin_google_id = input('Google ID (테스트용): ')
     
     # 기존 사용자 확인
     existing_user = User.query.filter_by(email=admin_email).first()
@@ -30,7 +29,6 @@ def create_admin():
     
     # 관리자 생성
     admin = User(
-        google_id=admin_google_id,
         email=admin_email,
         name=admin_name,
         role='super_admin'

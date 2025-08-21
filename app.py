@@ -47,7 +47,7 @@ def get_client_secrets_file():
 
 def login_is_required(function):
     def wrapper(*args, **kwargs):
-        if "google_id" not in session:
+        if "email" not in session:
             return redirect(url_for('login'))
         else:
             return function(*args, **kwargs)
@@ -94,7 +94,6 @@ def callback():
         audience=GOOGLE_CLIENT_ID
     )
     
-    session["google_id"] = id_info.get("sub")
     session["name"] = id_info.get("name")
     session["email"] = id_info.get("email")
     

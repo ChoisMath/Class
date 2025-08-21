@@ -129,15 +129,27 @@ def callback():
             flash('비활성화된 계정입니다. 관리자에게 문의하세요.', 'error')
             return redirect(url_for('auth.login'))
         
-        # Google ID 업데이트 (처음 로그인 시 또는 변경된 경우)
-        if supabase_user.get('google_id') != id_info.get('sub'):
-            supabase_service.update_user(supabase_user['id'], {
-                'google_id': id_info.get('sub'),
+        # 프로필 이미지 업데이트
+        try:
+            current_app.logger.info(f'Updating profile image for user: {user_email}')
+            result = supabase_service.update_user(supabase_user['id'], {
                 'profile_image': id_info.get('picture')
             })
+            if result:
+                current_app.logger.info('Profile image updated successfully')
+                supabase_user['profile_image'] = id_info.get('picture')
+            else:
+                current_app.logger.warning('Failed to update profile image in Supabase, continuing with login')
+        except Exception as e:
+            current_app.logger.warning(f'Error updating profile image: {e}, continuing with login')
         
-        # Flask-Login용 로컬 사용자 생성/업데이트
-        user = User.create_or_update_from_supabase(supabase_user)
+        # Google 프로필 이미지를 포함한 사용자 데이터
+        supabase_user_with_profile = supabase_user.copy()
+        supabase_user_with_profile['profile_image'] = id_info.get('picture')
+        
+        # Flask-Login용 로컬 사용자 생성/업데이트 (email 기반)
+        user = User.create_or_update_from_supabase(supabase_user_with_profile)
+        current_app.logger.info(f'User created/updated: {user.email}, Role: {user.role}')
         
         # 로그인 처리
         login_user(user, remember=True)

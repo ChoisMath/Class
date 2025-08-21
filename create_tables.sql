@@ -50,7 +50,6 @@ CREATE TABLE IF NOT EXISTS teacher_profiles (
 );
 
 -- 인덱스 생성 (성능 최적화)
-CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 CREATE INDEX IF NOT EXISTS idx_student_profiles_user_id ON student_profiles(user_id);
@@ -84,43 +83,25 @@ CREATE TRIGGER update_teacher_profiles_updated_at
     EXECUTE FUNCTION update_updated_at_column();
 
 -- Row Level Security (RLS) 정책 설정
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE student_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE teacher_profiles ENABLE ROW LEVEL SECURITY;
+-- 주의: 현재 email 기반 인증을 사용하므로 RLS는 비활성화됩니다
+-- 필요시 나중에 email 기반 RLS 정책으로 업데이트 가능
 
--- 사용자는 자신의 정보만 조회 가능
-CREATE POLICY "Users can view own profile" ON users
-    FOR SELECT USING (auth.uid()::text = google_id);
+-- ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE student_profiles ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE teacher_profiles ENABLE ROW LEVEL SECURITY;
 
--- 관리자는 모든 사용자 정보 관리 가능
-CREATE POLICY "Admins can manage all users" ON users
-    FOR ALL USING (
-        EXISTS (
-            SELECT 1 FROM users 
-            WHERE google_id = auth.uid()::text 
-            AND role IN ('admin', 'super_admin')
-        )
-    );
+-- 향후 email 기반 RLS 정책 예시 (현재 비활성화)
+-- CREATE POLICY "Users can view own profile" ON users
+--     FOR SELECT USING (email = current_setting('app.current_user_email', true));
 
--- 학생은 자신의 프로필만 조회 가능
-CREATE POLICY "Students can view own profile" ON student_profiles
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM users 
-            WHERE id = student_profiles.user_id 
-            AND google_id = auth.uid()::text
-        )
-    );
-
--- 교사는 자신의 프로필만 조회 가능
-CREATE POLICY "Teachers can view own profile" ON teacher_profiles
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM users 
-            WHERE id = teacher_profiles.user_id 
-            AND google_id = auth.uid()::text
-        )
-    );
+-- CREATE POLICY "Admins can manage all users" ON users
+--     FOR ALL USING (
+--         EXISTS (
+--             SELECT 1 FROM users 
+--             WHERE email = current_setting('app.current_user_email', true)
+--             AND role IN ('admin', 'super_admin')
+--         )
+--     );
 
 -- 샘플 데이터 삽입 (테스트용)
 -- 이제 이메일만으로 사용자를 식별합니다

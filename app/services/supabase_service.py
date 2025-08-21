@@ -50,10 +50,9 @@ class SupabaseService:
     
     # 사용자 관리
     def get_user_by_google_id(self, google_id: str) -> Optional[Dict]:
-        """Google ID로 사용자 조회"""
-        endpoint = f"users?google_id=eq.{google_id}&select=*"
-        result = self._make_request('GET', endpoint)
-        return result[0] if result else None
+        """Google ID로 사용자 조회 (더 이상 사용하지 않음 - email 사용 권장)"""
+        # 호환성을 위해 유지하지만 빈 결과 반환
+        return None
     
     def get_user_by_email(self, email: str) -> Optional[Dict]:
         """이메일로 사용자 조회"""
@@ -117,9 +116,9 @@ class SupabaseService:
         return self._make_request('PATCH', endpoint, profile_data, use_service_role=True)
     
     # 통합 사용자 정보 조회
-    def get_user_with_profile(self, google_id: str) -> Optional[Dict]:
-        """사용자 정보와 프로필을 함께 조회"""
-        user = self.get_user_by_google_id(google_id)
+    def get_user_with_profile(self, email: str) -> Optional[Dict]:
+        """이메일로 사용자 정보와 프로필을 함께 조회"""
+        user = self.get_user_by_email(email)
         if not user:
             return None
         

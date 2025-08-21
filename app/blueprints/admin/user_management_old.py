@@ -162,7 +162,7 @@ def delete_user(user_id):
             return redirect(url_for('admin.users'))
         
         # 자기 자신 삭제 방지
-        current_supabase_user = supabase_service.get_user_by_google_id(current_user.google_id)
+        current_supabase_user = supabase_service.get_user_by_email(current_user.email)
         if current_supabase_user and current_supabase_user['id'] == user_id:
             flash('자기 자신의 계정은 삭제할 수 없습니다.', 'error')
             return redirect(url_for('admin.users'))

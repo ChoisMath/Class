@@ -8,7 +8,6 @@ class User(UserMixin, db.Model):
     __tablename__ = 'users'
     
     id = db.Column(db.Integer, primary_key=True)
-    google_id = db.Column(db.String(255), unique=True, nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False)
     name = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(50), nullable=False, default='student')
@@ -62,19 +61,17 @@ class User(UserMixin, db.Model):
     
     @staticmethod
     def create_or_update_from_google(google_user_info, role='student'):
-        """Google OAuth 정보로부터 사용자 생성 또는 업데이트 (기존 메서드 유지)"""
-        user = User.query.filter_by(google_id=google_user_info['sub']).first()
+        """Google OAuth 정보로부터 사용자 생성 또는 업데이트 (email 기반)"""
+        user = User.query.filter_by(email=google_user_info['email']).first()
         
         if user:
             # 기존 사용자 정보 업데이트
-            user.email = google_user_info.get('email')
             user.name = google_user_info.get('name')
             user.profile_image = google_user_info.get('picture')
             user.updated_at = datetime.utcnow()
         else:
             # 새 사용자 생성
             user = User(
-                google_id=google_user_info['sub'],
                 email=google_user_info.get('email'),
                 name=google_user_info.get('name'),
                 profile_image=google_user_info.get('picture'),
@@ -87,12 +84,14 @@ class User(UserMixin, db.Model):
     
     @staticmethod
     def create_or_update_from_supabase(supabase_user):
-        """Supabase 사용자 정보로부터 Flask-Login용 사용자 생성/업데이트"""
-        user = User.query.filter_by(google_id=supabase_user['google_id']).first()
+        """Supabase 사용자 정보로부터 Flask-Login용 사용자 생성/업데이트 (email 기반)"""
+        email = supabase_user.get('email')
+        
+        # email로 사용자 검색
+        user = User.query.filter_by(email=email).first()
         
         if user:
             # 기존 사용자 정보 업데이트
-            user.email = supabase_user.get('email')
             user.name = supabase_user.get('name')
             user.profile_image = supabase_user.get('profile_image')
             user.role = supabase_user.get('role')
@@ -101,8 +100,7 @@ class User(UserMixin, db.Model):
         else:
             # 새 사용자 생성
             user = User(
-                google_id=supabase_user['google_id'],
-                email=supabase_user.get('email'),
+                email=email,
                 name=supabase_user.get('name'),
                 profile_image=supabase_user.get('profile_image'),
                 role=supabase_user.get('role'),
