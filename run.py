@@ -42,10 +42,16 @@ def create_admin():
 
 if __name__ == '__main__':
     # 개발 환경에서만 HTTPS 비활성화
-    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+    if os.getenv('FLASK_ENV') != 'production':
+        os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
     
     # 데이터베이스 자동 생성
     with app.app_context():
         db.create_all()
     
-    app.run(host='localhost', port=5000, debug=True)
+    # 프로덕션 환경에서는 Railway가 포트를 지정
+    port = int(os.getenv('PORT', 5000))
+    host = '0.0.0.0' if os.getenv('FLASK_ENV') == 'production' else 'localhost'
+    debug = os.getenv('FLASK_ENV') != 'production'
+    
+    app.run(host=host, port=port, debug=debug)

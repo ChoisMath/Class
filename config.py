@@ -1,7 +1,13 @@
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+# 개발 환경에서만 .env 파일 로드 (Railway에서는 무시됨)
+try:
+    if os.getenv('RAILWAY_ENVIRONMENT') is None:  # Railway 환경이 아닌 경우만
+        from dotenv import load_dotenv
+        load_dotenv()
+except ImportError:
+    # dotenv가 설치되지 않은 경우 (프로덕션)
+    pass
 
 class Config:
     """Base configuration"""

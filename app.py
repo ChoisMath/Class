@@ -3,11 +3,17 @@ from google.auth.transport.requests import Request
 from google.oauth2 import id_token
 from google_auth_oauthlib.flow import Flow
 import os
-from dotenv import load_dotenv
 import pathlib
 import requests
 
-load_dotenv()
+# 개발 환경에서만 .env 파일 로드 (Railway에서는 무시됨)
+try:
+    if os.getenv('RAILWAY_ENVIRONMENT') is None:  # Railway 환경이 아닌 경우만
+        from dotenv import load_dotenv
+        load_dotenv()
+except ImportError:
+    # dotenv가 설치되지 않은 경우 (프로덕션)
+    pass
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-here')
@@ -16,15 +22,28 @@ app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-here')
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
 GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
 
-client_secrets_file = {
-    "web": {
-        "client_id": GOOGLE_CLIENT_ID,
-        "client_secret": GOOGLE_CLIENT_SECRET,
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token",
-        "redirect_uris": ["http://localhost:5000/callback"]
+# 환경에 따라 redirect URI 설정
+def get_redirect_uri():
+    if os.getenv('RAILWAY_ENVIRONMENT'):
+        # Railway 환경: 자동으로 도메인을 감지하거나 환경변수에서 가져옴
+        base_url = os.getenv('RAILWAY_PUBLIC_DOMAIN', 'your-app.railway.app')
+        if not base_url.startswith('http'):
+            base_url = f'https://{base_url}'
+        return f'{base_url}/callback'
+    else:
+        # 로컬 개발 환경
+        return 'http://localhost:5000/callback'
+
+def get_client_secrets_file():
+    return {
+        "web": {
+            "client_id": GOOGLE_CLIENT_ID,
+            "client_secret": GOOGLE_CLIENT_SECRET,
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "redirect_uris": [get_redirect_uri()]
+        }
     }
-}
 
 def login_is_required(function):
     def wrapper(*args, **kwargs):
@@ -42,9 +61,9 @@ def index():
 @app.route("/login")
 def login():
     flow = Flow.from_client_config(
-        client_secrets_file,
+        get_client_secrets_file(),
         scopes=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email", "openid"],
-        redirect_uri=url_for('callback', _external=True)
+        redirect_uri=get_redirect_uri()
     )
     
     authorization_url, state = flow.authorization_url()
@@ -54,9 +73,9 @@ def login():
 @app.route("/callback")
 def callback():
     flow = Flow.from_client_config(
-        client_secrets_file,
+        get_client_secrets_file(),
         scopes=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email", "openid"],
-        redirect_uri=url_for('callback', _external=True),
+        redirect_uri=get_redirect_uri(),
         state=session["state"]
     )
     
