@@ -49,10 +49,6 @@ class SupabaseService:
             return {}
     
     # 사용자 관리
-    def get_user_by_google_id(self, google_id: str) -> Optional[Dict]:
-        """Google ID로 사용자 조회 (더 이상 사용하지 않음 - email 사용 권장)"""
-        # 호환성을 위해 유지하지만 빈 결과 반환
-        return None
     
     def get_user_by_email(self, email: str) -> Optional[Dict]:
         """이메일로 사용자 조회"""
