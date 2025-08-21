@@ -19,6 +19,24 @@ class Config:
     GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
     GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
     
+    # 서버 설정 (OAuth redirect URI 생성용)
+    @staticmethod
+    def get_base_url():
+        """환경별 기본 URL 생성"""
+        # Railway 프로덕션 환경
+        if os.getenv('RAILWAY_ENVIRONMENT'):
+            railway_domain = os.getenv('RAILWAY_STATIC_URL') or os.getenv('RAILWAY_PUBLIC_DOMAIN')
+            if railway_domain:
+                return f"https://{railway_domain}"
+            # Railway 동적 도메인 패턴
+            project_name = os.getenv('RAILWAY_PROJECT_NAME', 'testproject')
+            return f"https://{project_name}.up.railway.app"
+        
+        # 개발 환경
+        host = 'localhost'
+        port = int(os.getenv('PORT', 5000))
+        return f"http://{host}:{port}"
+    
     # 성능 최적화 설정
     SEND_FILE_MAX_AGE_DEFAULT = 31536000  # 1년 캐시
     TEMPLATES_AUTO_RELOAD = False

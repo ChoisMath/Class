@@ -13,13 +13,17 @@ from app import db
 
 def get_client_secrets_config():
     """Google OAuth 클라이언트 설정 반환"""
+    # 환경별 기본 URL 생성
+    base_url = current_app.config['Config'].get_base_url()
+    callback_url = f"{base_url}/auth/callback"
+    
     return {
         "web": {
             "client_id": current_app.config['GOOGLE_CLIENT_ID'],
             "client_secret": current_app.config['GOOGLE_CLIENT_SECRET'],
             "auth_uri": "https://accounts.google.com/o/oauth2/auth",
             "token_uri": "https://oauth2.googleapis.com/token",
-            "redirect_uris": [url_for('auth.callback', _external=True)]
+            "redirect_uris": [callback_url]
         }
     }
 
@@ -29,12 +33,16 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
     
+    # 환경별 기본 URL 생성
+    base_url = current_app.config['Config'].get_base_url()
+    callback_url = f"{base_url}/auth/callback"
+    
     flow = Flow.from_client_config(
         get_client_secrets_config(),
         scopes=["https://www.googleapis.com/auth/userinfo.profile", 
                 "https://www.googleapis.com/auth/userinfo.email", 
                 "openid"],
-        redirect_uri=url_for('auth.callback', _external=True)
+        redirect_uri=callback_url
     )
     
     authorization_url, state = flow.authorization_url()
@@ -45,12 +53,16 @@ def login():
 def callback():
     """Google OAuth 콜백 처리"""
     try:
+        # 환경별 기본 URL 생성 (로그인과 동일한 URL 사용)
+        base_url = current_app.config['Config'].get_base_url()
+        callback_url = f"{base_url}/auth/callback"
+        
         flow = Flow.from_client_config(
             get_client_secrets_config(),
             scopes=["https://www.googleapis.com/auth/userinfo.profile", 
                     "https://www.googleapis.com/auth/userinfo.email", 
                     "openid"],
-            redirect_uri=url_for('auth.callback', _external=True),
+            redirect_uri=callback_url,
             state=session["state"]
         )
         
