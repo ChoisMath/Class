@@ -9,7 +9,7 @@ from . import admin_bp
 @login_required
 @admin_required
 @admin_password_required
-def users():
+def user_list():
     """사용자 관리 페이지"""
     page = request.args.get('page', 1, type=int)
     per_page = 20

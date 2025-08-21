@@ -28,47 +28,9 @@ def dashboard():
                          user=current_user, 
                          stats=stats)
 
-@admin_bp.route('/users')
-@login_required
-@permission_required('manage_users')
-def users():
-    """사용자 관리"""
-    page = request.args.get('page', 1, type=int)
-    per_page = 20
-    
-    users = User.query.order_by(User.created_at.desc()).paginate(
-        page=page, per_page=per_page, error_out=False
-    )
-    
-    return render_template('admin/users.html', users=users)
+# users 경로는 user_management.py에서 처리됨
 
-@admin_bp.route('/users/<int:user_id>')
-@login_required
-@permission_required('manage_users')
-def user_detail(user_id):
-    """사용자 상세 정보"""
-    user = User.query.get_or_404(user_id)
-    return render_template('admin/user_detail.html', user=user)
-
-@admin_bp.route('/users/<int:user_id>/role', methods=['POST'])
-@login_required
-@permission_required('manage_users')
-def update_user_role(user_id):
-    """사용자 역할 변경"""
-    user = User.query.get_or_404(user_id)
-    new_role = request.json.get('role')
-    
-    if new_role not in ['student', 'teacher', 'admin']:
-        return jsonify({'error': '유효하지 않은 역할입니다.'}), 400
-    
-    # 최고관리자만 admin 역할을 부여할 수 있음
-    if new_role == 'admin' and current_user.role != 'super_admin':
-        return jsonify({'error': '관리자 역할을 부여할 권한이 없습니다.'}), 403
-    
-    user.role = new_role
-    db.session.commit()
-    
-    return jsonify({'message': f'{user.name}님의 역할이 {user.get_role_name()}로 변경되었습니다.'})
+# 사용자 관련 모든 경로는 user_management.py에서 처리됨
 
 @admin_bp.route('/system')
 @login_required
