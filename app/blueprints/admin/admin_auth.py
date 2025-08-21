@@ -6,8 +6,9 @@ def admin_password_required(f):
     """관리자 비밀번호 인증이 필요한 라우트를 보호하는 데코레이터"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # 이미 관리자 인증을 통과한 경우
-        if session.get('admin_authenticated'):
+        # 사용자가 로그인되어 있고 관리자 인증을 통과한 경우만
+        from flask_login import current_user
+        if current_user.is_authenticated and session.get('admin_authenticated'):
             return f(*args, **kwargs)
         
         # POST 요청으로 비밀번호가 전송된 경우

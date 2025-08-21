@@ -10,7 +10,7 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">관리자 대시보드</a></li>
-                    <li class="breadcrumb-item"><a href="{{ url_for('admin.users') }}">사용자 관리</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.user_management') }}">사용자 관리</a></li>
                     <li class="breadcrumb-item active">새 사용자 생성</li>
                 </ol>
             </nav>
@@ -208,7 +208,7 @@
                     <button type="submit" class="btn btn-primary">
                         ✅ 사용자 생성
                     </button>
-                    <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">
+                    <a href="{{ url_for('admin.user_management') }}" class="btn btn-secondary">
                         ❌ 취소
                     </a>
                 </div>

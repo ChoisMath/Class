@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}프로필 - 학습 관리 시스템{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>👤 내 프로필</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            {% if user.profile_image %}
+                                <img src="{{ user.profile_image }}" alt="프로필 이미지" class="img-fluid rounded-circle" style="width: 100px; height: 100px;">
+                            {% else %}
+                                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+                                    <span class="text-white fs-2">{{ user.name[0] }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-9">
+                            <h4>{{ user.name }}</h4>
+                            <p class="text-muted">{{ user.get_role_name() }}</p>
+                            <p><strong>이메일:</strong> {{ user.email }}</p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>계정 정보</h5>
+                            <p><strong>역할:</strong> {{ user.get_role_name() }}</p>
+                            <p><strong>상태:</strong> 
+                                {% if user.is_active %}
+                                    <span class="badge bg-success">활성</span>
+                                {% else %}
+                                    <span class="badge bg-danger">비활성</span>
+                                {% endif %}
+                            </p>
+                            {% if user.last_login %}
+                                <p><strong>마지막 로그인:</strong> {{ user.last_login.strftime('%Y-%m-%d %H:%M') }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5>추가 정보</h5>
+                            {% if user.phone %}
+                                <p><strong>연락처:</strong> {{ user.phone }}</p>
+                            {% endif %}
+                            {% if user.department %}
+                                <p><strong>부서/학과:</strong> {{ user.department }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="text-center">
+                        <a href="{{ url_for('main.index') }}" class="btn btn-secondary">
+                            🏠 홈으로 돌아가기
+                        </a>
+                        
+                        {% if user.is_admin() %}
+                            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-primary">
+                                🛡️ 관리자 대시보드
+                            </a>
+                        {% elif user.is_teacher() %}
+                            <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-info">
+                                📚 교사 대시보드
+                            </a>
+                        {% elif user.is_student() %}
+                            <a href="{{ url_for('student.dashboard') }}" class="btn btn-success">
+                                🎓 학생 대시보드
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

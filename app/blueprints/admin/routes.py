@@ -7,7 +7,7 @@ from .admin_auth import admin_password_required, clear_admin_session
 from app import db
 from . import admin_bp
 
-@admin_bp.route('/dashboard')
+@admin_bp.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 @admin_required
 @admin_password_required

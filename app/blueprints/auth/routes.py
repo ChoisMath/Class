@@ -61,7 +61,12 @@ def login():
         redirect_uri=callback_url
     )
     
-    authorization_url, state = flow.authorization_url()
+    # Google 계정 선택을 강제하고 이전 세션을 무효화
+    authorization_url, state = flow.authorization_url(
+        access_type='offline',  # refresh token 포함
+        include_granted_scopes='true',
+        prompt='select_account'  # 항상 계정 선택 화면 표시
+    )
     session["state"] = state
     return redirect(authorization_url)
 
@@ -174,12 +179,37 @@ def callback():
 @auth_bp.route('/logout')
 @login_required
 def logout():
-    """로그아웃"""
+    """로그아웃 - 모든 세션 정리"""
     user_name = current_user.name
+    current_app.logger.info(f'로그아웃 시작: {user_name}')
+    
+    # Flask-Login 세션 정리
     logout_user()
+    current_app.logger.info('Flask-Login logout_user() 호출 완료')
+    
+    # 모든 세션 데이터 완전 삭제 (관리자 인증 포함)
     session.clear()
-    flash(f'{user_name}님, 안전하게 로그아웃되었습니다.', 'info')
-    return redirect(url_for('main.index'))
+    current_app.logger.info('session.clear() 호출 완료')
+    
+    # Flask-Login 세션 키 수동 삭제 (강제 로그아웃)
+    if '_user_id' in session:
+        del session['_user_id']
+    if '_remember' in session:
+        del session['_remember']
+    if '_remember_seconds' in session:
+        del session['_remember_seconds']
+    
+    # 세션 영구 삭제
+    session.permanent = False
+    current_app.logger.info('Flask-Login 세션 키 완전 삭제 완료')
+    
+    flash(f'{user_name}님, 안전하게 로그아웃되었습니다.', 'success')
+    
+    # Google OAuth에서도 로그아웃하기 위해 Google 로그아웃 URL로 리디렉션
+    google_logout_url = f"https://accounts.google.com/logout?continue={url_for('main.index', _external=True)}"
+    current_app.logger.info(f'Google 로그아웃 URL로 리디렉션: {google_logout_url}')
+    
+    return redirect(google_logout_url)
 
 @auth_bp.route('/profile')
 @login_required
