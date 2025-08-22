@@ -164,12 +164,12 @@ def callback():
         
         flash(f'환영합니다, {user.name}님!', 'success')
         
-        # 다음 페이지로 리디렉션 또는 역할별 대시보드로 이동
+        # 다음 페이지로 리디렉션 또는 통합 대시보드로 이동
         next_page = request.args.get('next')
         if next_page:
             return redirect(next_page)
         
-        return redirect(url_for('main.index'))
+        return redirect(url_for('dashboard.index'))
         
     except Exception as e:
         current_app.logger.error(f'OAuth callback error: {str(e)}', exc_info=True)

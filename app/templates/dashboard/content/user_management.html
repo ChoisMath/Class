@@ -1,0 +1,437 @@
+<div class="user-management-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4><i class="fas fa-users"></i> 전체 사용자 관리</h4>
+        <button class="btn btn-primary" onclick="showAddUserModal()">
+            <i class="fas fa-plus"></i> 사용자 추가
+        </button>
+    </div>
+    
+    <!-- 검색 및 필터 -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="input-group">
+                <input type="text" class="form-control" id="userSearch" placeholder="이름 또는 이메일로 검색">
+                <button class="btn btn-outline-secondary" onclick="searchUsers()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="roleFilter" onchange="filterUsers()">
+                <option value="">모든 역할</option>
+                <option value="student">학생</option>
+                <option value="teacher">교사</option>
+                <option value="admin">관리자</option>
+                <option value="super_admin">최고관리자</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="statusFilter" onchange="filterUsers()">
+                <option value="">모든 상태</option>
+                <option value="true">활성</option>
+                <option value="false">비활성</option>
+            </select>
+        </div>
+    </div>
+    
+    <!-- 사용자 목록 테이블 -->
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>프로필</th>
+                    <th>이름</th>
+                    <th>이메일</th>
+                    <th>역할</th>
+                    <th>상태</th>
+                    <th>가입일</th>
+                    <th>마지막 로그인</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody id="userTableBody">
+                <tr>
+                    <td colspan="8" class="text-center">
+                        <i class="fas fa-spinner fa-spin"></i> 사용자 목록을 불러오는 중...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 사용자 추가 모달 -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">사용자 추가</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addUserForm">
+                    <div class="mb-3">
+                        <label class="form-label">이메일 *</label>
+                        <input type="email" class="form-control" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">이름 *</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">역할 *</label>
+                        <select class="form-select" name="role" required>
+                            <option value="">역할 선택</option>
+                            <option value="student">학생</option>
+                            <option value="teacher">교사</option>
+                            <option value="admin">관리자</option>
+                            <option value="super_admin">최고관리자</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="is_active" id="isActive" checked>
+                            <label class="form-check-label" for="isActive">활성 상태</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" onclick="addUser()">추가</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 사용자 편집 모달 -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">사용자 정보 수정</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    <input type="hidden" name="user_id">
+                    <div class="mb-3">
+                        <label class="form-label">이메일</label>
+                        <input type="email" class="form-control" name="email" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">이름 *</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">역할 *</label>
+                        <select class="form-select" name="role" required>
+                            <option value="student">학생</option>
+                            <option value="teacher">교사</option>
+                            <option value="admin">관리자</option>
+                            <option value="super_admin">최고관리자</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="is_active" id="editIsActive">
+                            <label class="form-check-label" for="editIsActive">활성 상태</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" onclick="updateUser()">수정</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.user-management-container {
+    max-width: 100%;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.role-badge {
+    font-size: 0.8em;
+}
+
+.status-badge {
+    font-size: 0.8em;
+}
+
+.action-buttons .btn {
+    margin-right: 5px;
+    padding: 5px 10px;
+}
+
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.9em;
+    }
+    
+    .action-buttons .btn {
+        padding: 3px 8px;
+        font-size: 0.8em;
+    }
+}
+</style>
+
+<script>
+let allUsers = [];
+let filteredUsers = [];
+
+// 페이지 로드 시 사용자 목록 불러오기
+document.addEventListener('DOMContentLoaded', function() {
+    loadUsers();
+});
+
+function loadUsers() {
+    fetch('/dashboard/api/users')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                allUsers = data.users;
+                filteredUsers = [...allUsers];
+                renderUserTable();
+            } else {
+                showError('사용자 목록을 불러오는데 실패했습니다: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('사용자 목록을 불러오는 중 오류가 발생했습니다.');
+        });
+}
+
+function renderUserTable() {
+    const tbody = document.getElementById('userTableBody');
+    
+    if (filteredUsers.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center text-muted">
+                    검색 결과가 없습니다.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = filteredUsers.map(user => `
+        <tr>
+            <td>
+                <img src="${user.profile_image || '/static/images/default-avatar.png'}" 
+                     alt="프로필" class="user-avatar">
+            </td>
+            <td>${user.name}</td>
+            <td>${user.email}</td>
+            <td>
+                <span class="badge role-badge ${getRoleBadgeClass(user.role)}">
+                    ${getRoleDisplayName(user.role)}
+                </span>
+            </td>
+            <td>
+                <span class="badge status-badge ${user.is_active ? 'bg-success' : 'bg-danger'}">
+                    ${user.is_active ? '활성' : '비활성'}
+                </span>
+            </td>
+            <td>${formatDate(user.created_at)}</td>
+            <td>${user.last_login ? formatDate(user.last_login) : '없음'}</td>
+            <td class="action-buttons">
+                <button class="btn btn-sm btn-outline-primary" onclick="editUser('${user.id}')">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteUser('${user.id}', '${user.name}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function getRoleBadgeClass(role) {
+    const classes = {
+        'student': 'bg-info',
+        'teacher': 'bg-warning',
+        'admin': 'bg-primary',
+        'super_admin': 'bg-dark'
+    };
+    return classes[role] || 'bg-secondary';
+}
+
+function getRoleDisplayName(role) {
+    const names = {
+        'student': '학생',
+        'teacher': '교사',
+        'admin': '관리자',
+        'super_admin': '최고관리자'
+    };
+    return names[role] || role;
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ko-KR');
+}
+
+function searchUsers() {
+    const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+    filteredUsers = allUsers.filter(user => 
+        user.name.toLowerCase().includes(searchTerm) || 
+        user.email.toLowerCase().includes(searchTerm)
+    );
+    applyFilters();
+}
+
+function filterUsers() {
+    const roleFilter = document.getElementById('roleFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+    
+    filteredUsers = allUsers.filter(user => {
+        const roleMatch = !roleFilter || user.role === roleFilter;
+        const statusMatch = !statusFilter || user.is_active.toString() === statusFilter;
+        return roleMatch && statusMatch;
+    });
+    
+    applyFilters();
+}
+
+function applyFilters() {
+    renderUserTable();
+}
+
+function showAddUserModal() {
+    document.getElementById('addUserForm').reset();
+    new bootstrap.Modal(document.getElementById('addUserModal')).show();
+}
+
+function addUser() {
+    const form = document.getElementById('addUserForm');
+    const formData = new FormData(form);
+    
+    const userData = {
+        email: formData.get('email'),
+        name: formData.get('name'),
+        role: formData.get('role'),
+        is_active: formData.get('is_active') === 'on'
+    };
+    
+    fetch('/dashboard/api/users', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+            showSuccess('사용자가 성공적으로 추가되었습니다.');
+            loadUsers();
+        } else {
+            showError('사용자 추가에 실패했습니다: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showError('사용자 추가 중 오류가 발생했습니다.');
+    });
+}
+
+function editUser(userId) {
+    const user = allUsers.find(u => u.id === userId);
+    if (!user) return;
+    
+    const form = document.getElementById('editUserForm');
+    form.user_id.value = user.id;
+    form.email.value = user.email;
+    form.name.value = user.name;
+    form.role.value = user.role;
+    form.is_active.checked = user.is_active;
+    
+    new bootstrap.Modal(document.getElementById('editUserModal')).show();
+}
+
+function updateUser() {
+    const form = document.getElementById('editUserForm');
+    const formData = new FormData(form);
+    
+    const userData = {
+        name: formData.get('name'),
+        role: formData.get('role'),
+        is_active: formData.get('is_active') === 'on'
+    };
+    
+    const userId = formData.get('user_id');
+    
+    fetch(`/dashboard/api/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+            showSuccess('사용자 정보가 성공적으로 수정되었습니다.');
+            loadUsers();
+        } else {
+            showError('사용자 정보 수정에 실패했습니다: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showError('사용자 정보 수정 중 오류가 발생했습니다.');
+    });
+}
+
+function deleteUser(userId, userName) {
+    if (!confirm(`정말로 "${userName}" 사용자를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+        return;
+    }
+    
+    fetch(`/dashboard/api/users/${userId}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess('사용자가 성공적으로 삭제되었습니다.');
+            loadUsers();
+        } else {
+            showError('사용자 삭제에 실패했습니다: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showError('사용자 삭제 중 오류가 발생했습니다.');
+    });
+}
+
+function showSuccess(message) {
+    // 성공 메시지 표시 (toast 또는 alert 사용)
+    alert('성공: ' + message);
+}
+
+function showError(message) {
+    // 에러 메시지 표시 (toast 또는 alert 사용)
+    alert('오류: ' + message);
+}
+</script>

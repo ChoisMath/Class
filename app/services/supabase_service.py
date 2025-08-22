@@ -131,6 +131,130 @@ class SupabaseService:
         """마지막 로그인 시간 업데이트"""
         data = {'last_login': datetime.utcnow().isoformat()}
         return self.update_user(user_id, data)
+    
+    def get_user_by_id(self, user_id: str) -> Optional[Dict]:
+        """ID로 사용자 조회"""
+        endpoint = f"users?id=eq.{user_id}&select=*"
+        result = self._make_request('GET', endpoint, use_service_role=True)
+        return result[0] if result else None
+    
+    # 학교 관리
+    def get_schools(self) -> List[Dict]:
+        """학교 목록 조회"""
+        endpoint = "schools?select=*&order=created_at.desc"
+        return self._make_request('GET', endpoint, use_service_role=True)
+    
+    def create_school(self, school_data: Dict) -> Optional[Dict]:
+        """학교 생성"""
+        endpoint = "schools"
+        return self._make_request('POST', endpoint, school_data, use_service_role=True)
+    
+    def update_school(self, school_id: str, school_data: Dict) -> Optional[Dict]:
+        """학교 정보 업데이트"""
+        endpoint = f"schools?id=eq.{school_id}"
+        return self._make_request('PATCH', endpoint, school_data, use_service_role=True)
+    
+    def delete_school(self, school_id: str) -> bool:
+        """학교 삭제"""
+        endpoint = f"schools?id=eq.{school_id}"
+        result = self._make_request('DELETE', endpoint, use_service_role=True)
+        return result is not None
+    
+    # 학급 관리
+    def get_all_classes(self) -> List[Dict]:
+        """전체 학급 목록 조회"""
+        endpoint = "classes?select=*,schools(name)&order=grade,class_number"
+        return self._make_request('GET', endpoint, use_service_role=True)
+    
+    def get_classes_by_teacher(self, teacher_email: str) -> List[Dict]:
+        """특정 교사의 담당 학급 조회"""
+        endpoint = f"classes?teacher_email=eq.{teacher_email}&select=*,schools(name)&order=grade,class_number"
+        return self._make_request('GET', endpoint, use_service_role=True)
+    
+    def get_classes_by_school(self, school_id: str) -> List[Dict]:
+        """특정 학교의 학급 목록 조회"""
+        endpoint = f"classes?school_id=eq.{school_id}&select=*&order=grade,class_number"
+        return self._make_request('GET', endpoint, use_service_role=True)
+    
+    def create_class(self, class_data: Dict) -> Optional[Dict]:
+        """학급 생성"""
+        endpoint = "classes"
+        return self._make_request('POST', endpoint, class_data, use_service_role=True)
+    
+    def update_class(self, class_id: str, class_data: Dict) -> Optional[Dict]:
+        """학급 정보 업데이트"""
+        endpoint = f"classes?id=eq.{class_id}"
+        return self._make_request('PATCH', endpoint, class_data, use_service_role=True)
+    
+    def delete_class(self, class_id: str) -> bool:
+        """학급 삭제"""
+        endpoint = f"classes?id=eq.{class_id}"
+        result = self._make_request('DELETE', endpoint, use_service_role=True)
+        return result is not None
+    
+    # 학생-학급 연결 관리
+    def get_student_classes(self, student_email: str) -> List[Dict]:
+        """학생이 속한 학급 목록 조회"""
+        endpoint = f"student_classes?student_email=eq.{student_email}&select=*,classes(*,schools(name))&is_active=eq.true"
+        return self._make_request('GET', endpoint, use_service_role=True)
+    
+    def get_class_students(self, class_id: str) -> List[Dict]:
+        """특정 학급의 학생 목록 조회"""
+        endpoint = f"student_classes?class_id=eq.{class_id}&select=student_email,users(name,email)&is_active=eq.true"
+        return self._make_request('GET', endpoint, use_service_role=True)
+    
+    def enroll_student_to_class(self, student_email: str, class_id: str) -> Optional[Dict]:
+        """학생을 학급에 등록"""
+        data = {
+            'student_email': student_email,
+            'class_id': class_id,
+            'is_active': True
+        }
+        endpoint = "student_classes"
+        return self._make_request('POST', endpoint, data, use_service_role=True)
+    
+    def remove_student_from_class(self, student_email: str, class_id: str) -> bool:
+        """학생을 학급에서 제거"""
+        endpoint = f"student_classes?student_email=eq.{student_email}&class_id=eq.{class_id}"
+        result = self._make_request('DELETE', endpoint, use_service_role=True)
+        return result is not None
+    
+    # 출석 관리
+    def get_student_attendance(self, student_email: str, start_date: str = None, end_date: str = None) -> List[Dict]:
+        """특정 학생의 출석 기록 조회"""
+        endpoint = f"attendance?student_email=eq.{student_email}&select=*,classes(class_name,schools(name))&order=attendance_date.desc,period"
+        
+        if start_date and end_date:
+            endpoint += f"&attendance_date=gte.{start_date}&attendance_date=lte.{end_date}"
+        
+        return self._make_request('GET', endpoint, use_service_role=True)
+    
+    def get_attendance_records(self, class_id: str = None, date: str = None) -> List[Dict]:
+        """출석 기록 조회 (학급별, 날짜별)"""
+        endpoint = "attendance?select=*,classes(class_name,schools(name))&order=attendance_date.desc,period"
+        
+        if class_id:
+            endpoint += f"&class_id=eq.{class_id}"
+        if date:
+            endpoint += f"&attendance_date=eq.{date}"
+        
+        return self._make_request('GET', endpoint, use_service_role=True)
+    
+    def mark_attendance(self, attendance_data: Dict) -> Optional[Dict]:
+        """출석 체크"""
+        endpoint = "attendance"
+        return self._make_request('POST', endpoint, attendance_data, use_service_role=True)
+    
+    def update_attendance(self, attendance_id: str, attendance_data: Dict) -> Optional[Dict]:
+        """출석 기록 수정"""
+        endpoint = f"attendance?id=eq.{attendance_id}"
+        return self._make_request('PATCH', endpoint, attendance_data, use_service_role=True)
+    
+    def delete_attendance(self, attendance_id: str) -> bool:
+        """출석 기록 삭제"""
+        endpoint = f"attendance?id=eq.{attendance_id}"
+        result = self._make_request('DELETE', endpoint, use_service_role=True)
+        return result is not None
 
 # 전역 서비스 인스턴스
 supabase_service = SupabaseService()

@@ -110,6 +110,93 @@ CREATE TRIGGER update_teacher_profiles_updated_at
 INSERT INTO users (email, name, role, is_active) VALUES
 ('your-email@gmail.com', '관리자 이름', 'super_admin', true);
 
+-- 학교 정보 테이블
+CREATE TABLE IF NOT EXISTS schools (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    grade_count INTEGER CHECK (grade_count >= 1 AND grade_count <= 12),
+    address TEXT,
+    phone VARCHAR(20),
+    email VARCHAR(255),
+    website VARCHAR(255),
+    principal_name VARCHAR(100),
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 학급 정보 테이블
+CREATE TABLE IF NOT EXISTS classes (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
+    grade INTEGER CHECK (grade >= 1 AND grade <= 12),
+    class_number INTEGER CHECK (class_number >= 1),
+    class_name VARCHAR(100), -- 학급명 (예: 1-1, 컴퓨터과 1반)
+    teacher_email VARCHAR(255), -- 담임교사 이메일
+    room_number VARCHAR(50), -- 교실 번호
+    max_students INTEGER DEFAULT 30,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(school_id, grade, class_number)
+);
+
+-- 출석 기록 테이블
+CREATE TABLE IF NOT EXISTS attendance (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    student_email VARCHAR(255) NOT NULL,
+    class_id UUID REFERENCES classes(id) ON DELETE CASCADE,
+    attendance_date DATE NOT NULL,
+    period INTEGER CHECK (period >= 1 AND period <= 10), -- 교시 (1-10교시)
+    status VARCHAR(20) CHECK (status IN ('출석', '지각', '조퇴', '결석', '공결')) DEFAULT '출석',
+    note TEXT, -- 특이사항
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(student_email, class_id, attendance_date, period)
+);
+
+-- 학생-학급 연결 테이블 (학생이 여러 학급에 속할 수 있도록)
+CREATE TABLE IF NOT EXISTS student_classes (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    student_email VARCHAR(255) NOT NULL,
+    class_id UUID REFERENCES classes(id) ON DELETE CASCADE,
+    enrollment_date DATE DEFAULT CURRENT_DATE,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(student_email, class_id)
+);
+
+-- 인덱스 추가
+CREATE INDEX IF NOT EXISTS idx_schools_name ON schools(name);
+CREATE INDEX IF NOT EXISTS idx_classes_school_id ON classes(school_id);
+CREATE INDEX IF NOT EXISTS idx_classes_teacher_email ON classes(teacher_email);
+CREATE INDEX IF NOT EXISTS idx_attendance_student_email ON attendance(student_email);
+CREATE INDEX IF NOT EXISTS idx_attendance_class_id ON attendance(class_id);
+CREATE INDEX IF NOT EXISTS idx_attendance_date ON attendance(attendance_date);
+CREATE INDEX IF NOT EXISTS idx_student_classes_student_email ON student_classes(student_email);
+CREATE INDEX IF NOT EXISTS idx_student_classes_class_id ON student_classes(class_id);
+
+-- 업데이트 트리거 추가
+CREATE TRIGGER update_schools_updated_at 
+    BEFORE UPDATE ON schools 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_classes_updated_at 
+    BEFORE UPDATE ON classes 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_attendance_updated_at 
+    BEFORE UPDATE ON attendance 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_student_classes_updated_at 
+    BEFORE UPDATE ON student_classes 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
 -- 추가 사용자 예시
 /*
 INSERT INTO users (email, name, role, is_active) VALUES
@@ -121,4 +208,14 @@ INSERT INTO teacher_profiles (user_id, employee_id, subject, responsibility, pos
 
 INSERT INTO student_profiles (user_id, student_id, grade, class_number, admission_year, department) VALUES
 ((SELECT id FROM users WHERE email = 'student@example.com'), '2024001', 11, 1, 2024, '일반계');
+
+-- 샘플 학교 및 학급 데이터
+INSERT INTO schools (name, grade_count, address, phone, principal_name) VALUES
+('테스트 고등학교', 3, '서울시 강남구', '02-1234-5678', '김교장');
+
+INSERT INTO classes (school_id, grade, class_number, class_name, teacher_email, room_number) VALUES
+((SELECT id FROM schools WHERE name = '테스트 고등학교'), 1, 1, '1학년 1반', 'teacher@example.com', '101');
+
+INSERT INTO student_classes (student_email, class_id) VALUES
+('student@example.com', (SELECT id FROM classes WHERE class_name = '1학년 1반'));
 */

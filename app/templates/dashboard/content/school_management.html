@@ -1,0 +1,619 @@
+<div class="school-management-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4><i class="fas fa-school"></i> 학교 관리</h4>
+        <button class="btn btn-primary" onclick="showAddSchoolModal()">
+            <i class="fas fa-plus"></i> 학교 추가
+        </button>
+    </div>
+    
+    <!-- 학교 목록 -->
+    <div class="row" id="schoolList">
+        <div class="col-12 text-center">
+            <i class="fas fa-spinner fa-spin"></i> 학교 목록을 불러오는 중...
+        </div>
+    </div>
+</div>
+
+<!-- 학교 추가 모달 -->
+<div class="modal fade" id="addSchoolModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">학교 추가</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addSchoolForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">학교명 *</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">학년 수 *</label>
+                            <select class="form-select" name="grade_count" required>
+                                <option value="">선택하세요</option>
+                                <option value="3">3학년 (고등학교)</option>
+                                <option value="6">6학년 (초등학교)</option>
+                                <option value="9">9학년 (초중고 통합)</option>
+                                <option value="12">12학년 (전체)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">주소</label>
+                        <textarea class="form-control" name="address" rows="2"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">전화번호</label>
+                            <input type="tel" class="form-control" name="phone">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">이메일</label>
+                            <input type="email" class="form-control" name="email">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">교장명</label>
+                            <input type="text" class="form-control" name="principal_name">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">웹사이트</label>
+                            <input type="url" class="form-control" name="website">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" onclick="addSchool()">추가</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 학교 편집 모달 -->
+<div class="modal fade" id="editSchoolModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">학교 정보 수정</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editSchoolForm">
+                    <input type="hidden" name="school_id">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">학교명 *</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">학년 수 *</label>
+                            <select class="form-select" name="grade_count" required>
+                                <option value="3">3학년 (고등학교)</option>
+                                <option value="6">6학년 (초등학교)</option>
+                                <option value="9">9학년 (초중고 통합)</option>
+                                <option value="12">12학년 (전체)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">주소</label>
+                        <textarea class="form-control" name="address" rows="2"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">전화번호</label>
+                            <input type="tel" class="form-control" name="phone">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">이메일</label>
+                            <input type="email" class="form-control" name="email">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">교장명</label>
+                            <input type="text" class="form-control" name="principal_name">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">웹사이트</label>
+                            <input type="url" class="form-control" name="website">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" onclick="updateSchool()">수정</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 학급 관리 모달 -->
+<div class="modal fade" id="manageClassesModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">학급 관리</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 id="schoolNameForClasses"></h6>
+                    <button class="btn btn-sm btn-primary" onclick="showAddClassModal()">
+                        <i class="fas fa-plus"></i> 학급 추가
+                    </button>
+                </div>
+                
+                <!-- 학년별 학급 관리 -->
+                <div id="gradeClassesContainer">
+                    <!-- 동적으로 학년별 학급이 여기에 표시됩니다 -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 학급 추가 모달 -->
+<div class="modal fade" id="addClassModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">학급 추가</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addClassForm">
+                    <input type="hidden" name="school_id" id="classSchoolId">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">학년 *</label>
+                            <select class="form-select" name="grade" required>
+                                <!-- 학교 선택 시 동적으로 옵션 생성 -->
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">반 *</label>
+                            <input type="number" class="form-control" name="class_number" min="1" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">학급명</label>
+                        <input type="text" class="form-control" name="class_name" placeholder="예: 1학년 1반">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">담임교사 이메일</label>
+                        <input type="email" class="form-control" name="teacher_email" placeholder="teacher@school.com">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">교실 번호</label>
+                        <input type="text" class="form-control" name="room_number" placeholder="101">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">최대 학생 수</label>
+                        <input type="number" class="form-control" name="max_students" value="30" min="1">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" onclick="addClass()">추가</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.school-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background: white;
+    transition: box-shadow 0.3s ease;
+}
+
+.school-card:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.school-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.school-name {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #333;
+}
+
+.school-info {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.school-actions {
+    margin-top: 15px;
+}
+
+.school-actions .btn {
+    margin-right: 10px;
+}
+
+.grade-section {
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.grade-header {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #495057;
+}
+
+.class-item {
+    display: inline-block;
+    margin: 5px;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.class-item .teacher-email {
+    color: #6c757d;
+    font-size: 0.8em;
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .school-card {
+        padding: 15px;
+    }
+    
+    .school-actions .btn {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+    }
+}
+</style>
+
+<script>
+let schools = [];
+let currentSchoolForClasses = null;
+
+// 페이지 로드 시 학교 목록 불러오기
+document.addEventListener('DOMContentLoaded', function() {
+    loadSchools();
+});
+
+function loadSchools() {
+    fetch('/dashboard/api/schools')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                schools = data.schools;
+                renderSchoolList();
+            } else {
+                showError('학교 목록을 불러오는데 실패했습니다: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('학교 목록을 불러오는 중 오류가 발생했습니다.');
+        });
+}
+
+function renderSchoolList() {
+    const container = document.getElementById('schoolList');
+    
+    if (schools.length === 0) {
+        container.innerHTML = `
+            <div class="col-12 text-center">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> 등록된 학교가 없습니다. 
+                    새 학교를 추가해보세요.
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = schools.map(school => `
+        <div class="col-md-6 col-lg-4">
+            <div class="school-card">
+                <div class="school-header">
+                    <div class="school-name">${school.name}</div>
+                </div>
+                <div class="school-info">
+                    <div><i class="fas fa-graduation-cap"></i> ${school.grade_count}학년</div>
+                    ${school.address ? `<div><i class="fas fa-map-marker-alt"></i> ${school.address}</div>` : ''}
+                    ${school.phone ? `<div><i class="fas fa-phone"></i> ${school.phone}</div>` : ''}
+                    ${school.principal_name ? `<div><i class="fas fa-user-tie"></i> ${school.principal_name}</div>` : ''}
+                </div>
+                <div class="school-actions">
+                    <button class="btn btn-sm btn-outline-primary" onclick="manageClasses('${school.id}', '${school.name}', ${school.grade_count})">
+                        <i class="fas fa-chalkboard-teacher"></i> 학급 관리
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="editSchool('${school.id}')">
+                        <i class="fas fa-edit"></i> 수정
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteSchool('${school.id}', '${school.name}')">
+                        <i class="fas fa-trash"></i> 삭제
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function showAddSchoolModal() {
+    document.getElementById('addSchoolForm').reset();
+    new bootstrap.Modal(document.getElementById('addSchoolModal')).show();
+}
+
+function addSchool() {
+    const form = document.getElementById('addSchoolForm');
+    const formData = new FormData(form);
+    
+    const schoolData = {
+        name: formData.get('name'),
+        grade_count: parseInt(formData.get('grade_count')),
+        address: formData.get('address'),
+        phone: formData.get('phone'),
+        email: formData.get('email'),
+        principal_name: formData.get('principal_name'),
+        website: formData.get('website')
+    };
+    
+    fetch('/dashboard/api/schools', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(schoolData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('addSchoolModal')).hide();
+            showSuccess('학교가 성공적으로 추가되었습니다.');
+            loadSchools();
+        } else {
+            showError('학교 추가에 실패했습니다: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showError('학교 추가 중 오류가 발생했습니다.');
+    });
+}
+
+function editSchool(schoolId) {
+    const school = schools.find(s => s.id === schoolId);
+    if (!school) return;
+    
+    const form = document.getElementById('editSchoolForm');
+    form.school_id.value = school.id;
+    form.name.value = school.name;
+    form.grade_count.value = school.grade_count;
+    form.address.value = school.address || '';
+    form.phone.value = school.phone || '';
+    form.email.value = school.email || '';
+    form.principal_name.value = school.principal_name || '';
+    form.website.value = school.website || '';
+    
+    new bootstrap.Modal(document.getElementById('editSchoolModal')).show();
+}
+
+function updateSchool() {
+    const form = document.getElementById('editSchoolForm');
+    const formData = new FormData(form);
+    
+    const schoolData = {
+        name: formData.get('name'),
+        grade_count: parseInt(formData.get('grade_count')),
+        address: formData.get('address'),
+        phone: formData.get('phone'),
+        email: formData.get('email'),
+        principal_name: formData.get('principal_name'),
+        website: formData.get('website')
+    };
+    
+    const schoolId = formData.get('school_id');
+    
+    fetch(`/dashboard/api/schools/${schoolId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(schoolData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('editSchoolModal')).hide();
+            showSuccess('학교 정보가 성공적으로 수정되었습니다.');
+            loadSchools();
+        } else {
+            showError('학교 정보 수정에 실패했습니다: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showError('학교 정보 수정 중 오류가 발생했습니다.');
+    });
+}
+
+function deleteSchool(schoolId, schoolName) {
+    if (!confirm(`정말로 "${schoolName}" 학교를 삭제하시겠습니까?\n관련된 모든 학급과 데이터가 함께 삭제됩니다.`)) {
+        return;
+    }
+    
+    fetch(`/dashboard/api/schools/${schoolId}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess('학교가 성공적으로 삭제되었습니다.');
+            loadSchools();
+        } else {
+            showError('학교 삭제에 실패했습니다: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showError('학교 삭제 중 오류가 발생했습니다.');
+    });
+}
+
+function manageClasses(schoolId, schoolName, gradeCount) {
+    currentSchoolForClasses = {id: schoolId, name: schoolName, grade_count: gradeCount};
+    document.getElementById('schoolNameForClasses').textContent = schoolName + ' 학급 관리';
+    
+    // 학급 추가 모달의 학년 옵션 설정
+    const gradeSelect = document.querySelector('#addClassForm select[name="grade"]');
+    gradeSelect.innerHTML = '';
+    for (let i = 1; i <= gradeCount; i++) {
+        gradeSelect.innerHTML += `<option value="${i}">${i}학년</option>`;
+    }
+    
+    loadClassesBySchool(schoolId);
+    new bootstrap.Modal(document.getElementById('manageClassesModal')).show();
+}
+
+function loadClassesBySchool(schoolId) {
+    fetch(`/dashboard/api/classes?school_id=${schoolId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderClassesByGrade(data.classes);
+            } else {
+                showError('학급 목록을 불러오는데 실패했습니다: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('학급 목록을 불러오는 중 오류가 발생했습니다.');
+        });
+}
+
+function renderClassesByGrade(classes) {
+    const container = document.getElementById('gradeClassesContainer');
+    const gradeCount = currentSchoolForClasses.grade_count;
+    
+    // 학년별로 학급 그룹화
+    const classesByGrade = {};
+    for (let i = 1; i <= gradeCount; i++) {
+        classesByGrade[i] = classes.filter(c => c.grade === i);
+    }
+    
+    container.innerHTML = Object.keys(classesByGrade).map(grade => `
+        <div class="grade-section">
+            <div class="grade-header">${grade}학년</div>
+            <div class="classes-container">
+                ${classesByGrade[grade].length > 0 ? 
+                    classesByGrade[grade].map(cls => `
+                        <div class="class-item">
+                            <strong>${cls.class_name || `${cls.grade}학년 ${cls.class_number}반`}</strong>
+                            ${cls.teacher_email ? `<span class="teacher-email">${cls.teacher_email}</span>` : ''}
+                            <div class="mt-1">
+                                <button class="btn btn-xs btn-outline-danger" onclick="deleteClass('${cls.id}', '${cls.class_name}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('') : 
+                    '<span class="text-muted">등록된 학급이 없습니다.</span>'
+                }
+            </div>
+        </div>
+    `).join('');
+}
+
+function showAddClassModal() {
+    document.getElementById('addClassForm').reset();
+    document.getElementById('classSchoolId').value = currentSchoolForClasses.id;
+    new bootstrap.Modal(document.getElementById('addClassModal')).show();
+}
+
+function addClass() {
+    const form = document.getElementById('addClassForm');
+    const formData = new FormData(form);
+    
+    const classData = {
+        school_id: formData.get('school_id'),
+        grade: parseInt(formData.get('grade')),
+        class_number: parseInt(formData.get('class_number')),
+        class_name: formData.get('class_name'),
+        teacher_email: formData.get('teacher_email'),
+        room_number: formData.get('room_number'),
+        max_students: parseInt(formData.get('max_students'))
+    };
+    
+    fetch('/dashboard/api/classes', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(classData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('addClassModal')).hide();
+            showSuccess('학급이 성공적으로 추가되었습니다.');
+            loadClassesBySchool(currentSchoolForClasses.id);
+        } else {
+            showError('학급 추가에 실패했습니다: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showError('학급 추가 중 오류가 발생했습니다.');
+    });
+}
+
+function deleteClass(classId, className) {
+    if (!confirm(`정말로 "${className}" 학급을 삭제하시겠습니까?`)) {
+        return;
+    }
+    
+    fetch(`/dashboard/api/classes/${classId}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess('학급이 성공적으로 삭제되었습니다.');
+            loadClassesBySchool(currentSchoolForClasses.id);
+        } else {
+            showError('학급 삭제에 실패했습니다: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showError('학급 삭제 중 오류가 발생했습니다.');
+    });
+}
+
+function showSuccess(message) {
+    alert('성공: ' + message);
+}
+
+function showError(message) {
+    alert('오류: ' + message);
+}
+</script>

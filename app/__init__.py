@@ -36,11 +36,13 @@ def create_app(config_name=None):
     from app.blueprints.student import student_bp
     from app.blueprints.teacher import teacher_bp
     from app.blueprints.admin import admin_bp
+    from app.blueprints.dashboard import dashboard_bp
     
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(student_bp, url_prefix='/student')
     app.register_blueprint(teacher_bp, url_prefix='/teacher')
     app.register_blueprint(admin_bp, url_prefix='/admin')
+    app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     
     # Main routes
     from app.blueprints.main import main_bp
