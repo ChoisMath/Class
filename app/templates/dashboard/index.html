@@ -171,6 +171,8 @@
     min-height: 100vh;
     background-color: #f8f9fa;
     padding: 30px;
+    margin-left: 0 !important; /* 강제로 좌측 마진 제거 */
+    transition: none !important; /* 트랜지션 효과도 제거 */
 }
 
 .content-area {
@@ -178,15 +180,15 @@
     margin: 0 auto;
 }
 
-/* 사이드바 열림 상태에서만 헤더와 콘텐츠 조정 */
-body.sidebar-open .main-header .header-container {
+/* 사이드바 열림 상태에서만 헤더와 콘텐츠 조정 - 비활성화 */
+/* body.sidebar-open .main-header .header-container {
     margin-left: 280px;
     transition: margin-left 0.3s ease;
 }
 
 body.sidebar-open .main-content {
     margin-left: 280px;
-}
+} */
 
 /* 시스템 현황 스타일 */
 .system-status-header {
@@ -477,21 +479,19 @@ function loadContent(contentType) {
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebar-overlay');
-    const body = document.body;
     
     sidebar.classList.toggle('show');
     overlay.classList.toggle('show');
-    body.classList.toggle('sidebar-open');
+    // body.classList.toggle('sidebar-open'); // 비활성화
 }
 
 function closeSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebar-overlay');
-    const body = document.body;
     
     sidebar.classList.remove('show');
     overlay.classList.remove('show');
-    body.classList.remove('sidebar-open');
+    // body.classList.remove('sidebar-open'); // 비활성화
 }
 
 // ESC 키로 사이드바 닫기
