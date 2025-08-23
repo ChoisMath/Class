@@ -45,7 +45,12 @@ class SupabaseService:
             return response.json() if response.content else {}
             
         except requests.exceptions.RequestException as e:
-            print(f"Supabase API 오류: {str(e)}")
+            print(f"Supabase API 오류 - URL: {url}")
+            print(f"Method: {method}, Data: {data}")
+            print(f"Error: {str(e)}")
+            if hasattr(e, 'response') and e.response is not None:
+                print(f"Response Status: {e.response.status_code}")
+                print(f"Response Body: {e.response.text}")
             return {}
     
     # 사용자 관리
@@ -137,6 +142,12 @@ class SupabaseService:
         endpoint = f"users?id=eq.{user_id}&select=*"
         result = self._make_request('GET', endpoint, use_service_role=True)
         return result[0] if result else None
+    
+    def search_users(self, query: str) -> List[Dict]:
+        """사용자 검색 (이름, 이메일로 검색)"""
+        # Supabase의 ilike 연산자를 사용하여 대소문자 구분 없이 검색
+        endpoint = f"users?or=(name.ilike.*{query}*,email.ilike.*{query}*)&select=*&limit=20&order=name"
+        return self._make_request('GET', endpoint, use_service_role=True)
     
     # 학교 관리
     def get_schools(self) -> List[Dict]:
@@ -254,6 +265,239 @@ class SupabaseService:
         """출석 기록 삭제"""
         endpoint = f"attendance?id=eq.{attendance_id}"
         result = self._make_request('DELETE', endpoint, use_service_role=True)
+        return result is not None
+    
+    # =============================================================================
+    # 자리배치표 관리 메소드 (Seating Management)
+    # =============================================================================
+    
+    def get_seat_arrangements(self, classroom: str, arrangement_date: str) -> List[Dict]:
+        """자리배치 조회"""
+        endpoint = f"seat_arrangements?classroom=eq.{classroom}&arrangement_date=eq.{arrangement_date}&is_active=eq.true&select=*&order=position_key"
+        return self._make_request('GET', endpoint, use_service_role=True)
+    
+    def get_seat_data_with_students(self, classroom: str, arrangement_date: str) -> Dict:
+        """학생 정보와 함께 자리배치 데이터 조회"""
+        # 자리배치 조회
+        arrangements = self.get_seat_arrangements(classroom, arrangement_date)
+        
+        # 모든 학생 이메일 수집
+        all_student_emails = []
+        for arrangement in arrangements:
+            if arrangement.get('student_emails'):
+                all_student_emails.extend(arrangement['student_emails'])
+        
+        seat_data = {}
+        student_map = {}
+        
+        if all_student_emails:
+            # 학생 정보 조회 
+            students_endpoint = f"users?email=in.({','.join(all_student_emails)})&role=eq.student&select=id,email,name,student_profiles(student_id,grade,class_number)"
+            students = self._make_request('GET', students_endpoint, use_service_role=True)
+            
+            # 학생 정보를 이메일로 매핑
+            for student in students:
+                profile = student.get('student_profiles', [{}])[0] if student.get('student_profiles') else {}
+                student_map[student['email']] = {
+                    'id': student['id'],
+                    'email': student['email'],
+                    'name': student['name'],
+                    'number': profile.get('student_id', ''),
+                    'grade': profile.get('grade'),
+                    'class_number': profile.get('class_number')
+                }
+        
+        # 자리배치 데이터에 학생 정보 추가
+        for arrangement in arrangements:
+            position_key = arrangement['position_key']
+            student_emails = arrangement.get('student_emails', [])
+            
+            seat_data[position_key] = []
+            for email in student_emails:
+                if email in student_map:
+                    seat_data[position_key].append(student_map[email])
+                else:
+                    seat_data[position_key].append({'email': email, 'name': '알 수 없음'})
+        
+        return seat_data
+    
+    def save_seat_arrangements(self, classroom: str, arrangement_date: str, 
+                             arrangements: Dict[str, List[str]], created_by_email: str) -> Dict:
+        """자리배치 저장"""
+        try:
+            # 생성자 ID 조회
+            user = self.get_user_by_email(created_by_email)
+            if not user:
+                return {'success': False, 'error': '사용자를 찾을 수 없습니다.'}
+            
+            created_by_id = user['id']
+            
+            # 기존 배치 비활성화
+            endpoint = f"seat_arrangements?classroom=eq.{classroom}&arrangement_date=eq.{arrangement_date}"
+            deactivate_data = {'is_active': False}
+            self._make_request('PATCH', endpoint, deactivate_data, use_service_role=True)
+            
+            # 새 배치 저장
+            insert_data = []
+            for position_key, student_emails in arrangements.items():
+                if student_emails:  # 빈 자리가 아닌 경우에만 저장
+                    insert_data.append({
+                        'classroom': classroom,
+                        'position_key': position_key,
+                        'student_emails': student_emails,
+                        'arrangement_date': arrangement_date,
+                        'created_by': created_by_id,
+                        'is_active': True
+                    })
+            
+            if insert_data:
+                endpoint = "seat_arrangements"
+                result = self._make_request('POST', endpoint, insert_data, use_service_role=True)
+                return {'success': True, 'saved_positions': len(insert_data)}
+            
+            return {'success': True, 'saved_positions': 0}
+            
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+    
+    def get_classroom_layout(self, classroom_key: str) -> Optional[Dict]:
+        """교실 레이아웃 조회"""
+        endpoint = f"classroom_layouts?classroom_key=eq.{classroom_key}&is_active=eq.true&select=*"
+        result = self._make_request('GET', endpoint, use_service_role=True)
+        return result[0] if result else None
+    
+    def get_classroom_layouts(self) -> List[Dict]:
+        """모든 교실 레이아웃 조회"""
+        endpoint = "classroom_layouts?is_active=eq.true&select=*&order=classroom_key"
+        return self._make_request('GET', endpoint, use_service_role=True)
+    
+    def get_period_config(self, config_date: str) -> Optional[Dict]:
+        """교시 설정 조회"""
+        endpoint = f"period_configs?config_date=eq.{config_date}&select=*"
+        result = self._make_request('GET', endpoint, use_service_role=True)
+        return result[0] if result else None
+    
+    def get_attendance_records_by_period(self, attendance_date: str, period: int, classroom: str = None) -> List[Dict]:
+        """교시별 출석 기록 조회"""
+        endpoint = f"attendance_records?attendance_date=eq.{attendance_date}&period=eq.{period}&select=*,users(name,student_profiles(student_id,grade,class_number))&order=student_email"
+        return self._make_request('GET', endpoint, use_service_role=True)
+    
+    def get_activity_records(self, activity_date: str, period: int) -> List[Dict]:
+        """활동 기록 조회 (분임토의실 등)"""
+        endpoint = f"attendance_records?attendance_date=eq.{activity_date}&period=eq.{period}&status=eq.activity&select=*,users(name,student_profiles(student_id))&order=student_email"
+        return self._make_request('GET', endpoint, use_service_role=True)
+    
+    def mark_attendance_bulk(self, attendance_date: str, period: int, student_emails: List[str], 
+                           status: str, marked_by_email: str, notes: str = '') -> Dict:
+        """일괄 출석 처리"""
+        try:
+            # 처리자 정보 조회
+            marker = self.get_user_by_email(marked_by_email)
+            if not marker:
+                return {'success': False, 'error': '처리자를 찾을 수 없습니다.'}
+            
+            marked_by_id = marker['id']
+            current_time = datetime.utcnow().isoformat()
+            processed_count = 0
+            
+            for email in student_emails:
+                # 학생 정보 조회
+                student = self.get_user_by_email(email)
+                if not student or student['role'] != 'student':
+                    continue
+                
+                student_id = student['id']
+                
+                # 기존 기록 확인
+                existing_endpoint = f"attendance_records?attendance_date=eq.{attendance_date}&period=eq.{period}&student_id=eq.{student_id}&select=id,status"
+                existing_records = self._make_request('GET', existing_endpoint, use_service_role=True)
+                
+                if existing_records:
+                    # 기존 기록 업데이트
+                    existing_id = existing_records[0]['id']
+                    update_data = {
+                        'status': status,
+                        'notes': notes,
+                        'updated_at': current_time
+                    }
+                    
+                    if status == 'absent':
+                        update_data.update({
+                            'marked_by': marked_by_id,
+                            'marked_at': current_time
+                        })
+                    elif status in ['returned', 'present']:
+                        update_data.update({
+                            'returned_by': marked_by_id,
+                            'returned_at': current_time
+                        })
+                    
+                    update_endpoint = f"attendance_records?id=eq.{existing_id}"
+                    self._make_request('PATCH', update_endpoint, update_data, use_service_role=True)
+                else:
+                    # 새 기록 생성
+                    insert_data = {
+                        'attendance_date': attendance_date,
+                        'period': period,
+                        'student_id': student_id,
+                        'student_email': email,
+                        'status': status,
+                        'notes': notes
+                    }
+                    
+                    if status == 'absent':
+                        insert_data.update({
+                            'marked_by': marked_by_id,
+                            'marked_at': current_time
+                        })
+                    elif status in ['returned', 'present']:
+                        insert_data.update({
+                            'returned_by': marked_by_id,
+                            'returned_at': current_time
+                        })
+                    
+                    endpoint = "attendance_records"
+                    self._make_request('POST', endpoint, insert_data, use_service_role=True)
+                
+                processed_count += 1
+            
+            return {'success': True, 'processed_count': processed_count}
+            
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+    
+    def get_supervisor_schedules(self, schedule_date: str) -> List[Dict]:
+        """감독교사 스케줄 조회"""
+        endpoint = f"supervisor_schedules?schedule_date=eq.{schedule_date}&select=*,users(name,teacher_profiles(position,subject))&order=grade,start_time"
+        return self._make_request('GET', endpoint, use_service_role=True)
+    
+    def get_all_students(self) -> List[Dict]:
+        """모든 학생 목록 조회"""
+        endpoint = "users?role=eq.student&select=id,email,name,is_active,student_profiles(student_id,grade,class_number,department)&order=name"
+        return self._make_request('GET', endpoint, use_service_role=True)
+    
+    def get_study_groups(self, creator_email: str = None) -> List[Dict]:
+        """자율학습 그룹 조회"""
+        endpoint = "study_groups?is_active=eq.true&is_deleted=eq.false&select=*&order=created_at.desc"
+        if creator_email:
+            endpoint += f"&creator_email=eq.{creator_email}"
+        return self._make_request('GET', endpoint, use_service_role=True)
+    
+    def create_study_group(self, group_data: Dict) -> Optional[Dict]:
+        """자율학습 그룹 생성"""
+        endpoint = "study_groups"
+        return self._make_request('POST', endpoint, group_data, use_service_role=True)
+    
+    def update_study_group(self, group_id: str, group_data: Dict) -> Optional[Dict]:
+        """자율학습 그룹 업데이트"""
+        endpoint = f"study_groups?id=eq.{group_id}"
+        return self._make_request('PATCH', endpoint, group_data, use_service_role=True)
+    
+    def delete_study_group(self, group_id: str) -> bool:
+        """자율학습 그룹 삭제 (소프트 삭제)"""
+        endpoint = f"study_groups?id=eq.{group_id}"
+        delete_data = {'is_deleted': True}
+        result = self._make_request('PATCH', endpoint, delete_data, use_service_role=True)
         return result is not None
 
 # 전역 서비스 인스턴스

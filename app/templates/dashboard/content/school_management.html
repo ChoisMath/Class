@@ -293,10 +293,8 @@
 let schools = [];
 let currentSchoolForClasses = null;
 
-// 페이지 로드 시 학교 목록 불러오기
-document.addEventListener('DOMContentLoaded', function() {
-    loadSchools();
-});
+// AJAX로 로드될 때 즉시 초기화
+loadSchools();
 
 function loadSchools() {
     fetch('/dashboard/api/schools')

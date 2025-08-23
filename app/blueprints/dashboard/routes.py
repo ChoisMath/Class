@@ -21,30 +21,38 @@ def index():
                          stats=stats)
 
 def get_navigation_items(role):
-    """역할별 네비게이션 메뉴 구성"""
+    """역할별 네비게이션 메뉴 구성 (DSHSLIFE 기준)"""
     items = []
     
     if role == 'super_admin':
         items = [
-            {'id': 'user_management', 'title': '전체 사용자 관리', 'icon': 'fas fa-users', 'active': True},
+            {'id': 'home', 'title': '시스템현황', 'icon': 'fas fa-chart-line', 'active': True},
+            {'id': 'user_management', 'title': '사용자 관리', 'icon': 'fas fa-users'},
             {'id': 'school_management', 'title': '학교관리', 'icon': 'fas fa-school'},
             {'id': 'class_management', 'title': '학급관리', 'icon': 'fas fa-chalkboard-teacher'},
-            {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check'}
+            {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check'},
+            {'id': 'seating', 'title': '자리배치 관리', 'icon': 'fas fa-chair', 'url': '/seating/'}
         ]
     elif role == 'admin':
         items = [
-            {'id': 'school_management', 'title': '학교관리', 'icon': 'fas fa-school', 'active': True},
+            {'id': 'home', 'title': '시스템현황', 'icon': 'fas fa-chart-line', 'active': True},
+            {'id': 'user_management', 'title': '사용자 관리', 'icon': 'fas fa-users'},
+            {'id': 'school_management', 'title': '학교관리', 'icon': 'fas fa-school'},
             {'id': 'class_management', 'title': '학급관리', 'icon': 'fas fa-chalkboard-teacher'},
-            {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check'}
+            {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check'},
+            {'id': 'seating', 'title': '자리배치 관리', 'icon': 'fas fa-chair', 'url': '/seating/'}
         ]
     elif role == 'teacher':
         items = [
-            {'id': 'class_management', 'title': '학급관리', 'icon': 'fas fa-chalkboard-teacher', 'active': True},
-            {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check'}
+            {'id': 'home', 'title': '교사 대시보드', 'icon': 'fas fa-tachometer-alt', 'active': True},
+            {'id': 'class_management', 'title': '학급관리', 'icon': 'fas fa-chalkboard-teacher'},
+            {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check'},
+            {'id': 'seating', 'title': '자리배치 관리', 'icon': 'fas fa-chair', 'url': '/seating/'}
         ]
     elif role == 'student':
         items = [
-            {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check', 'active': True}
+            {'id': 'home', 'title': '학생 대시보드', 'icon': 'fas fa-tachometer-alt', 'active': True},
+            {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check'}
         ]
     
     return items
@@ -96,7 +104,9 @@ def load_content(content_type):
         return jsonify({'error': '접근 권한이 없습니다.'}), 403
     
     try:
-        if content_type == 'user_management':
+        if content_type == 'home':
+            return render_template('dashboard/content/home.html', user=current_user)
+        elif content_type == 'user_management':
             return render_template('dashboard/content/user_management.html', user=current_user)
         elif content_type == 'school_management':
             return render_template('dashboard/content/school_management.html', user=current_user)
@@ -111,12 +121,29 @@ def load_content(content_type):
         return jsonify({'error': f'컨텐츠 로딩 중 오류가 발생했습니다: {str(e)}'}), 500
 
 def has_content_access(role, content_type):
-    """역할별 컨텐츠 접근 권한 체크"""
+    """역할별 컨텐츠 접근 권한 체크 (DSHSLIFE 기준)"""
     access_matrix = {
-        'super_admin': ['user_management', 'school_management', 'class_management', 'attendance'],
-        'admin': ['school_management', 'class_management', 'attendance'],
-        'teacher': ['class_management', 'attendance'],
-        'student': ['attendance']
+        'super_admin': ['home', 'user_management', 'school_management', 'class_management', 'attendance'],
+        'admin': ['home', 'user_management', 'school_management', 'class_management', 'attendance'],
+        'teacher': ['home', 'class_management', 'attendance'],
+        'student': ['home', 'attendance']
     }
     
     return content_type in access_matrix.get(role, [])
+
+# API 엔드포인트 - 실시간 통계 데이터
+@dashboard_bp.route('/api/stats')
+@login_required
+def get_stats_api():
+    """실시간 시스템 통계 API"""
+    try:
+        stats = get_dashboard_stats(current_user)
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500

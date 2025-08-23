@@ -22,9 +22,27 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+*_TEST.md
+*_test.py
+quick_test.py
+test_*.py
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+
+# Backup files
+*_backup.*
+*_bak.*
 
 # Generated QR codes
 static/qr_codes/
+
+# Test coverage reports
+htmlcov/
+.coverage
+*.coverage
 
 #AI
 .gemini/
@@ -37,3 +55,6 @@ GEMINI.md
 package-lock.json
 package.json
 .env
+
+# External downloads
+dshslife-main/

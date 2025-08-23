@@ -33,7 +33,6 @@ body {
 
 /* 성능 최적화 */
 .container {
-  max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
 }
@@ -49,43 +48,6 @@ body {
   padding: 0 15px;
 }
 
-/* 헤더 */
-.navbar {
-  background: #fff;
-  border-bottom: 1px solid var(--border-color);
-  box-shadow: var(--box-shadow);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.navbar-brand {
-  font-size: 1.25rem;
-  font-weight: 500;
-  color: var(--primary-color);
-  text-decoration: none;
-}
-
-.nav-links {
-  display: flex;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  gap: 1rem;
-}
-
-.nav-link {
-  color: var(--text-color);
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: var(--border-radius);
-  transition: var(--transition);
-}
-
-.nav-link:hover {
-  background-color: var(--light-color);
-  color: var(--primary-color);
-}
 
 /* 버튼 */
 .btn {
@@ -276,12 +238,6 @@ body {
   color: white;
 }
 
-/* 메인 콘텐츠 */
-.main-content {
-  margin-left: 250px;
-  padding: 2rem;
-}
-
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .sidebar {
@@ -295,7 +251,6 @@ body {
   
   .main-content {
     margin-left: 0;
-    padding: 1rem;
   }
   
   .dashboard-grid {

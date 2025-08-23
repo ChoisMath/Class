@@ -1,0 +1,589 @@
+/* 자리배치 관리 시스템 CSS */
+
+.seating-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* 헤더 */
+.seating-header {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a202c;
+    margin: 0 0 20px 0;
+}
+
+/* 컨트롤 */
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: end;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 120px;
+}
+
+.control-group label {
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 14px;
+}
+
+.form-control {
+    padding: 8px 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #3182ce;
+    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+}
+
+/* 버튼 */
+.btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 40px;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #3182ce, #2c5aa0);
+    color: white;
+}
+
+.btn-secondary {
+    background: #f7fafc;
+    color: #4a5568;
+    border: 2px solid #e2e8f0;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #38a169, #2f855a);
+    color: white;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #e53e3e, #c53030);
+    color: white;
+}
+
+/* 범례 */
+.legend {
+    display: flex;
+    gap: 20px;
+    background: white;
+    padding: 16px 24px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 2px solid #e2e8f0;
+}
+
+.legend-color.present {
+    background: #f7fafc;
+}
+
+.legend-color.absent {
+    background: #fed7d7;
+}
+
+.legend-color.activity {
+    background: #bee3f8;
+}
+
+.legend-color.selected {
+    background: #faf5ff;
+    border-color: #9f7aea;
+}
+
+/* 교실 레이아웃 */
+.seat-layout {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    min-height: 500px;
+}
+
+.classroom-info {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+#classroom-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0 0 8px 0;
+}
+
+.classroom-desc {
+    color: #718096;
+    margin: 0;
+    font-size: 14px;
+}
+
+/* 자리배치 그리드 */
+.seat-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    min-height: 400px;
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 2px dashed #cbd5e0;
+}
+
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    font-size: 16px;
+    color: #718096;
+}
+
+.seat-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 2px solid #4a5568;
+    border-radius: 8px;
+    padding: 12px;
+    background: white;
+    margin: 8px;
+}
+
+.section-title {
+    font-weight: 700;
+    font-size: 16px;
+    color: #2d3748;
+    margin-bottom: 12px;
+    padding: 4px 12px;
+    background: #edf2f7;
+    border-radius: 4px;
+}
+
+.section-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.section-row:last-child {
+    margin-bottom: 0;
+}
+
+/* 좌석 */
+.seat-item {
+    width: 80px;
+    height: 80px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #f7fafc;
+    position: relative;
+}
+
+.seat-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.seat-item.occupied {
+    background: white;
+    border-color: #cbd5e0;
+}
+
+.seat-item.present {
+    background: #f0fff4;
+    border-color: #9ae6b4;
+}
+
+.seat-item.absent {
+    background: #fed7d7;
+    border-color: #fc8181;
+}
+
+.seat-item.activity {
+    background: #bee3f8;
+    border-color: #63b3ed;
+}
+
+.seat-item.selected {
+    background: #faf5ff;
+    border-color: #9f7aea;
+    box-shadow: 0 0 0 2px rgba(159, 122, 234, 0.3);
+}
+
+.seat-item.empty {
+    background: #f7fafc;
+    border-color: #e2e8f0;
+    cursor: default;
+    color: #a0aec0;
+}
+
+.seat-item.empty:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.seat-number {
+    font-size: 10px;
+    color: #718096;
+    font-weight: 600;
+}
+
+.seat-name {
+    font-weight: 700;
+    font-size: 13px;
+    color: #2d3748;
+    margin: 2px 0;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.seat-activity {
+    font-size: 9px;
+    color: #4a5568;
+    text-align: center;
+    margin-top: auto;
+}
+
+.seat-status-indicator {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.seat-status-indicator.present {
+    background: #38a169;
+}
+
+.seat-status-indicator.absent {
+    background: #e53e3e;
+}
+
+.seat-status-indicator.activity {
+    background: #3182ce;
+}
+
+/* 부재 처리 패널 */
+.absence-panel {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #edf2f7;
+}
+
+.panel-header h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+}
+
+.selection-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.selection-toggle input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.panel-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.selected-count {
+    font-weight: 600;
+    color: #4a5568;
+    margin-left: auto;
+}
+
+.recent-changes {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 16px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.change-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.change-item:last-child {
+    border-bottom: none;
+}
+
+.change-info {
+    font-size: 14px;
+    color: #4a5568;
+}
+
+.change-time {
+    font-size: 12px;
+    color: #718096;
+}
+
+/* 모달 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 10% auto;
+    padding: 32px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    color: #a0aec0;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.close:hover {
+    color: #4a5568;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* 알림 */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1001;
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification-content {
+    background: white;
+    padding: 16px 20px;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-left: 4px solid #3182ce;
+}
+
+.notification.success .notification-content {
+    border-left-color: #38a169;
+}
+
+.notification.error .notification-content {
+    border-left-color: #e53e3e;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #a0aec0;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.notification-close:hover {
+    color: #4a5568;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1200px) {
+    .seating-container {
+        padding: 16px;
+    }
+    
+    .seat-grid {
+        overflow-x: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .control-group {
+        min-width: auto;
+    }
+    
+    .legend {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    
+    .seat-item {
+        width: 60px;
+        height: 60px;
+        font-size: 10px;
+    }
+    
+    .seat-name {
+        font-size: 11px;
+    }
+    
+    .panel-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    
+    .panel-actions {
+        flex-wrap: wrap;
+    }
+    
+    .modal-content {
+        margin: 20% auto;
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .seating-header {
+        padding: 16px;
+    }
+    
+    .seat-layout {
+        padding: 16px;
+    }
+    
+    .absence-panel {
+        padding: 16px;
+    }
+    
+    .seat-item {
+        width: 50px;
+        height: 50px;
+        font-size: 9px;
+    }
+    
+    .seat-name {
+        font-size: 10px;
+    }
+}

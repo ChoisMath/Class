@@ -150,10 +150,8 @@ let currentClassId = null;
 let classStudents = [];
 let allStudents = [];
 
-// 페이지 로드 시 초기화
-document.addEventListener('DOMContentLoaded', function() {
-    initializeClassManagement();
-});
+// AJAX로 로드될 때 즉시 초기화
+initializeClassManagement();
 
 function initializeClassManagement() {
     // 사용자 역할 확인 및 UI 설정

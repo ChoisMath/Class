@@ -1,0 +1,105 @@
+<!-- 시스템현황 콘텐츠 -->
+<div class="stats-grid-enhanced">
+    <div class="stat-card-large">
+        <div class="stat-icon">👥</div>
+        <div class="stat-info">
+            <div class="stat-number" id="totalUsers">-</div>
+            <div class="stat-label">전체 사용자</div>
+        </div>
+    </div>
+    <div class="stat-card-large">
+        <div class="stat-icon">🎓</div>
+        <div class="stat-info">
+            <div class="stat-number" id="totalStudents">-</div>
+            <div class="stat-label">학생</div>
+        </div>
+    </div>
+    <div class="stat-card-large">
+        <div class="stat-icon">👨‍🏫</div>
+        <div class="stat-info">
+            <div class="stat-number" id="totalTeachers">-</div>
+            <div class="stat-label">교사</div>
+        </div>
+    </div>
+    <div class="stat-card-large">
+        <div class="stat-icon">📈</div>
+        <div class="stat-info">
+            <div class="stat-number" id="utilizationRate">-</div>
+            <div class="stat-label">이용률</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 동적 통계 데이터 로드
+(function() {
+    // DOM이 준비될 때까지 대기
+    function waitForDOM() {
+        const elements = {
+            totalUsers: document.getElementById('totalUsers'),
+            totalStudents: document.getElementById('totalStudents'),
+            totalTeachers: document.getElementById('totalTeachers'),
+            utilizationRate: document.getElementById('utilizationRate')
+        };
+        
+        // 모든 요소가 준비되었는지 확인
+        if (elements.totalUsers && elements.totalStudents && elements.totalTeachers && elements.utilizationRate) {
+            loadAndDisplayStats(elements);
+        } else {
+            setTimeout(waitForDOM, 50);
+        }
+    }
+    
+    // 통계 데이터 로드 및 표시
+    function loadAndDisplayStats(elements) {
+        fetch('/dashboard/api/stats', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.stats) {
+                // 실제 API 데이터로 업데이트
+                elements.totalUsers.textContent = data.stats.total_users || 0;
+                elements.totalStudents.textContent = data.stats.total_students || 0;
+                elements.totalTeachers.textContent = data.stats.total_teachers || 0;
+                
+                // 이용률 계산 (학생수 기준)
+                const utilizationRate = data.stats.total_students && data.stats.total_users 
+                    ? Math.round((data.stats.total_students / data.stats.total_users) * 100)
+                    : 0;
+                elements.utilizationRate.textContent = utilizationRate + '%';
+            } else {
+                // API 실패 시 기본값
+                elements.totalUsers.textContent = '0';
+                elements.totalStudents.textContent = '0';
+                elements.totalTeachers.textContent = '0';
+                elements.utilizationRate.textContent = '0%';
+            }
+        })
+        .catch(error => {
+            // 연결 실패 시 기본값
+            elements.totalUsers.textContent = '0';
+            elements.totalStudents.textContent = '0';
+            elements.totalTeachers.textContent = '0';
+            elements.utilizationRate.textContent = '0%';
+        });
+    }
+    
+    // DOM 확인 시작
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', waitForDOM);
+    } else {
+        waitForDOM();
+    }
+})();
+</script>
+

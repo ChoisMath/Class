@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-
-{% block title %}My Class{% endblock %}
-
-{% block content %}
-<h1>hello, this is my class</h1>
-<p>안녕하세요, {{ name }}님! 성공적으로 로그인되었습니다.</p>
-<a href="{{ url_for('logout') }}" class="btn btn-logout">로그아웃</a>
-{% endblock %}
