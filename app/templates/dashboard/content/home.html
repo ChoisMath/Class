@@ -31,6 +31,47 @@
 </div>
 
 <script>
+// AJAX 재로드 시 스크립트 중복 방지
+(function() {
+    'use strict';
+    
+    // 재시도 로직이 있는 안전한 API 호출 함수
+    function safeApiCall(url, options = {}, retries = 3, delay = 1000) {
+    return new Promise((resolve, reject) => {
+        const attemptCall = (attempt) => {
+            console.log(`API 호출 시도 ${attempt}/${retries}: ${url}`);
+            
+            fetch(url, {
+                ...options,
+                timeout: 10000 // 10초 타임아웃
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(`API 호출 성공 (시도 ${attempt}):`, data);
+                resolve(data);
+            })
+            .catch(error => {
+                console.error(`API 호출 실패 (시도 ${attempt}):`, error);
+                
+                if (attempt < retries) {
+                    const nextDelay = delay * Math.pow(1.5, attempt - 1); // 지수적 백오프
+                    console.log(`${nextDelay}ms 후 재시도...`);
+                    setTimeout(() => attemptCall(attempt + 1), nextDelay);
+                } else {
+                    reject(error);
+                }
+            });
+        };
+        
+        attemptCall(1);
+    });
+}
+
 // 동적 통계 데이터 로드
 (function() {
     // DOM이 준비될 때까지 대기
@@ -50,20 +91,14 @@
         }
     }
     
-    // 통계 데이터 로드 및 표시
+    // 통계 데이터 로드 및 표시 (재시도 로직 적용)
     function loadAndDisplayStats(elements) {
-        fetch('/dashboard/api/stats', {
+        safeApiCall('/dashboard/api/stats', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             },
             credentials: 'same-origin'
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            return response.json();
         })
         .then(data => {
             if (data.success && data.stats) {
@@ -86,11 +121,15 @@
             }
         })
         .catch(error => {
-            // 연결 실패 시 기본값
-            elements.totalUsers.textContent = '0';
-            elements.totalStudents.textContent = '0';
-            elements.totalTeachers.textContent = '0';
-            elements.utilizationRate.textContent = '0%';
+            // 연결 실패 시 기본값 및 사용자에게 알림
+            console.error('시스템 통계 데이터 로드 최종 실패:', error);
+            elements.totalUsers.textContent = '오류';
+            elements.totalStudents.textContent = '오류';
+            elements.totalTeachers.textContent = '오류';
+            elements.utilizationRate.textContent = '오류';
+            
+            // 콘솔에 상세 오류 로그
+            console.log('시스템 통계 API 연결에 실패하여 기본값을 표시합니다.');
         });
     }
     
@@ -100,6 +139,8 @@
     } else {
         waitForDOM();
     }
-})();
+    
+})(); // 즉시 실행 함수 끝
+})(); // 전체 스코프 IIFE 끝
 </script>
 

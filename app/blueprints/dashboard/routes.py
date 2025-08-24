@@ -8,51 +8,51 @@ from . import dashboard_bp
 @dashboard_bp.route('/')
 @login_required
 def index():
-    """통합 대시보드 메인 페이지"""
-    # 사용자 역할에 따른 네비게이션 메뉴 구성
-    navigation_items = get_navigation_items(current_user.role)
-    
-    # 기본 통계 데이터
-    stats = get_dashboard_stats(current_user)
-    
-    return render_template('dashboard/index.html', 
-                         user=current_user,
-                         navigation_items=navigation_items,
-                         stats=stats)
+    """통합 대시보드 메인 페이지 - 홈으로 리다이렉트"""
+    return redirect(url_for('dashboard.home'))
 
-def get_navigation_items(role):
-    """역할별 네비게이션 메뉴 구성 (DSHSLIFE 기준)"""
+@dashboard_bp.route('/home')
+@login_required
+def home():
+    """시스템 현황 페이지"""
+    navigation_items = get_navigation_items(current_user.role, 'home')
+    return render_template('dashboard/home.html', 
+                         user=current_user,
+                         navigation_items=navigation_items)
+
+def get_navigation_items(role, current_page='home'):
+    """역할별 네비게이션 메뉴 구성 - 직접 URL 라우팅"""
     items = []
     
     if role == 'super_admin':
         items = [
-            {'id': 'home', 'title': '시스템현황', 'icon': 'fas fa-chart-line', 'active': True},
-            {'id': 'user_management', 'title': '사용자 관리', 'icon': 'fas fa-users'},
-            {'id': 'school_management', 'title': '학교관리', 'icon': 'fas fa-school'},
-            {'id': 'class_management', 'title': '학급관리', 'icon': 'fas fa-chalkboard-teacher'},
-            {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check'},
-            {'id': 'seating', 'title': '자리배치 관리', 'icon': 'fas fa-chair', 'url': '/seating/'}
+            {'id': 'home', 'title': '시스템현황', 'icon': 'fas fa-chart-line', 'url': '/dashboard/', 'active': current_page == 'home'},
+            {'id': 'user_management', 'title': '사용자 관리', 'icon': 'fas fa-users', 'url': '/dashboard/users', 'active': current_page == 'user_management'},
+            {'id': 'school_management', 'title': '학교관리', 'icon': 'fas fa-school', 'url': '/dashboard/schools', 'active': current_page == 'school_management'},
+            {'id': 'class_management', 'title': '학급관리', 'icon': 'fas fa-chalkboard-teacher', 'url': '/dashboard/classes', 'active': current_page == 'class_management'},
+            {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check', 'url': '/dashboard/attendance', 'active': current_page == 'attendance'},
+            {'id': 'seating', 'title': '자리배치 관리', 'icon': 'fas fa-chair', 'url': '/seating/', 'active': current_page == 'seating'}
         ]
     elif role == 'admin':
         items = [
-            {'id': 'home', 'title': '시스템현황', 'icon': 'fas fa-chart-line', 'active': True},
-            {'id': 'user_management', 'title': '사용자 관리', 'icon': 'fas fa-users'},
-            {'id': 'school_management', 'title': '학교관리', 'icon': 'fas fa-school'},
-            {'id': 'class_management', 'title': '학급관리', 'icon': 'fas fa-chalkboard-teacher'},
-            {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check'},
-            {'id': 'seating', 'title': '자리배치 관리', 'icon': 'fas fa-chair', 'url': '/seating/'}
+            {'id': 'home', 'title': '시스템현황', 'icon': 'fas fa-chart-line', 'url': '/dashboard/', 'active': current_page == 'home'},
+            {'id': 'user_management', 'title': '사용자 관리', 'icon': 'fas fa-users', 'url': '/dashboard/users', 'active': current_page == 'user_management'},
+            {'id': 'school_management', 'title': '학교관리', 'icon': 'fas fa-school', 'url': '/dashboard/schools', 'active': current_page == 'school_management'},
+            {'id': 'class_management', 'title': '학급관리', 'icon': 'fas fa-chalkboard-teacher', 'url': '/dashboard/classes', 'active': current_page == 'class_management'},
+            {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check', 'url': '/dashboard/attendance', 'active': current_page == 'attendance'},
+            {'id': 'seating', 'title': '자리배치 관리', 'icon': 'fas fa-chair', 'url': '/seating/', 'active': current_page == 'seating'}
         ]
     elif role == 'teacher':
         items = [
-            {'id': 'home', 'title': '교사 대시보드', 'icon': 'fas fa-tachometer-alt', 'active': True},
-            {'id': 'class_management', 'title': '학급관리', 'icon': 'fas fa-chalkboard-teacher'},
-            {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check'},
-            {'id': 'seating', 'title': '자리배치 관리', 'icon': 'fas fa-chair', 'url': '/seating/'}
+            {'id': 'home', 'title': '교사 대시보드', 'icon': 'fas fa-tachometer-alt', 'url': '/dashboard/', 'active': current_page == 'home'},
+            {'id': 'class_management', 'title': '학급관리', 'icon': 'fas fa-chalkboard-teacher', 'url': '/dashboard/classes', 'active': current_page == 'class_management'},
+            {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check', 'url': '/dashboard/attendance', 'active': current_page == 'attendance'},
+            {'id': 'seating', 'title': '자리배치 관리', 'icon': 'fas fa-chair', 'url': '/seating/', 'active': current_page == 'seating'}
         ]
     elif role == 'student':
         items = [
-            {'id': 'home', 'title': '학생 대시보드', 'icon': 'fas fa-tachometer-alt', 'active': True},
-            {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check'}
+            {'id': 'home', 'title': '학생 대시보드', 'icon': 'fas fa-tachometer-alt', 'url': '/dashboard/', 'active': current_page == 'home'},
+            {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check', 'url': '/dashboard/attendance', 'active': current_page == 'attendance'}
         ]
     
     return items
@@ -93,35 +93,51 @@ def get_dashboard_stats(user):
     
     return stats
 
-# AJAX 라우트 - 컨텐츠 동적 로딩
-@dashboard_bp.route('/content/<content_type>')
-@login_required  
-def load_content(content_type):
-    """역할별 컨텐츠 동적 로딩"""
-    
-    # 권한 체크
-    if not has_content_access(current_user.role, content_type):
-        return jsonify({'error': '접근 권한이 없습니다.'}), 403
-    
-    try:
-        if content_type == 'home':
-            return render_template('dashboard/content/home.html', user=current_user)
-        elif content_type == 'user_management':
-            return render_template('dashboard/content/user_management.html', user=current_user)
-        elif content_type == 'school_management':
-            return render_template('dashboard/content/school_management.html', user=current_user)
-        elif content_type == 'class_management':
-            return render_template('dashboard/content/class_management.html', user=current_user)
-        elif content_type == 'attendance':
-            return render_template('dashboard/content/attendance.html', user=current_user)
-        else:
-            return jsonify({'error': '존재하지 않는 컨텐츠입니다.'}), 404
-            
-    except Exception as e:
-        return jsonify({'error': f'컨텐츠 로딩 중 오류가 발생했습니다: {str(e)}'}), 500
+# 개별 페이지 라우트들
+@dashboard_bp.route('/users')
+@login_required
+@permission_required('manage_users')
+def users():
+    """사용자 관리 페이지"""
+    navigation_items = get_navigation_items(current_user.role, 'user_management')
+    return render_template('dashboard/users.html', 
+                         user=current_user,
+                         navigation_items=navigation_items,
+                         current_page='user_management')
 
-def has_content_access(role, content_type):
-    """역할별 컨텐츠 접근 권한 체크 (DSHSLIFE 기준)"""
+@dashboard_bp.route('/schools')
+@login_required  
+@permission_required('manage_schools')
+def schools():
+    """학교 관리 페이지"""
+    navigation_items = get_navigation_items(current_user.role, 'school_management')
+    return render_template('dashboard/schools.html', 
+                         user=current_user,
+                         navigation_items=navigation_items,
+                         current_page='school_management')
+
+@dashboard_bp.route('/classes')
+@login_required
+def classes():
+    """학급 관리 페이지"""
+    navigation_items = get_navigation_items(current_user.role, 'class_management') 
+    return render_template('dashboard/classes.html', 
+                         user=current_user,
+                         navigation_items=navigation_items,
+                         current_page='class_management')
+
+@dashboard_bp.route('/attendance')
+@login_required
+def attendance():
+    """출석체크 페이지"""
+    navigation_items = get_navigation_items(current_user.role, 'attendance')
+    return render_template('dashboard/attendance.html', 
+                         user=current_user,
+                         navigation_items=navigation_items,
+                         current_page='attendance')
+
+def has_page_access(role, page_type):
+    """역할별 페이지 접근 권한 체크"""
     access_matrix = {
         'super_admin': ['home', 'user_management', 'school_management', 'class_management', 'attendance'],
         'admin': ['home', 'user_management', 'school_management', 'class_management', 'attendance'],
@@ -129,7 +145,7 @@ def has_content_access(role, content_type):
         'student': ['home', 'attendance']
     }
     
-    return content_type in access_matrix.get(role, [])
+    return page_type in access_matrix.get(role, [])
 
 # API 엔드포인트 - 실시간 통계 데이터
 @dashboard_bp.route('/api/stats')

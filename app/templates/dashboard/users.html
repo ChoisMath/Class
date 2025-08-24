@@ -1,231 +1,204 @@
-<!-- 통계 정보 -->
-<div class="stats-grid mb-4">
-    <div class="stat-card">
-        <div class="stat-icon bg-primary">👥</div>
-        <div class="stat-info">
-            <div class="stat-number" id="totalUsers">0</div>
-            <div class="stat-label">전체 사용자</div>
-        </div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon bg-info">🎓</div>
-        <div class="stat-info">
-            <div class="stat-number" id="totalStudents">0</div>
-            <div class="stat-label">학생</div>
-        </div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon bg-warning">👨‍🏫</div>
-        <div class="stat-info">
-            <div class="stat-number" id="totalTeachers">0</div>
-            <div class="stat-label">교사</div>
-        </div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon bg-dark">👤</div>
-        <div class="stat-info">
-            <div class="stat-number" id="totalAdmins">0</div>
-            <div class="stat-label">관리자</div>
-        </div>
-    </div>
-</div>
+{% extends "base.html" %}
 
-<!-- 검색 및 필터 -->
-<div class="search-filter-row mb-4">
-    <div class="search-input">
-        <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-search"></i></span>
-            <input type="text" class="form-control" id="userSearch" placeholder="이름 또는 이메일로 검색..." onkeyup="searchUsers()">
-        </div>
-    </div>
-    <div class="filter-select">
-        <select class="form-select" id="roleFilter" onchange="filterUsers()">
-            <option value="">모든 역할</option>
-            <option value="student">학생</option>
-            <option value="teacher">교사</option>
-            <option value="admin">관리자</option>
-            <option value="super_admin">최고관리자</option>
-        </select>
-    </div>
-    <div class="filter-select">
-        <select class="form-select" id="statusFilter" onchange="filterUsers()">
-            <option value="">모든 상태</option>
-            <option value="true">활성</option>
-            <option value="false">비활성</option>
-        </select>
-    </div>
-    <div class="add-user-btn">
-        <button class="btn btn-primary" onclick="openUserModal()">
-            <i class="fas fa-user-plus me-2"></i>사용자 추가
-        </button>
-    </div>
-</div>
+{% block title %}사용자 관리{% endblock %}
 
-<!-- 사용자 목록 테이블 -->
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th>프로필</th>
-                        <th>이름</th>
-                        <th>이메일</th>
-                        <th>역할</th>
-                        <th>상태</th>
-                        <th>가입일</th>
-                        <th>마지막 로그인</th>
-                        <th>작업</th>
-                    </tr>
-                </thead>
-                <tbody id="userTableBody">
-                    <tr>
-                        <td colspan="8" class="text-center py-4">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <div class="mt-2">사용자 목록을 불러오는 중...</div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-
-<!-- 사용자 편집 모달 -->
-<div class="modal-overlay" id="userModal" style="display: none;">
-    <div class="modal-container">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h5 class="modal-title" id="userModalTitle">
-                    <i class="fas fa-user-plus me-2"></i>새 사용자 추가
-                </h5>
-                <button type="button" class="modal-close-btn" onclick="closeUserModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <form id="userForm">
-                <input type="hidden" name="user_id" id="userId">
-                <input type="hidden" name="mode" id="formMode" value="add">
-                
-                <div class="modal-content">
-                    <div class="form-section">
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">이메일 *</label>
-                                <input type="email" class="form-input" name="email" id="userEmail" required>
-                                <div class="form-help" id="emailHelpText">Google 계정 이메일을 입력하세요</div>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">이름 *</label>
-                                <input type="text" class="form-input" name="name" id="userName" required>
-                            </div>
-                        </div>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">역할 *</label>
-                                <select class="form-select" name="role" id="userRole" required onchange="toggleRoleFields()">
-                                    <option value="">역할을 선택하세요</option>
-                                    <option value="student">학생</option>
-                                    <option value="teacher">교사</option>
-                                    <option value="admin">관리자</option>
-                                    <option value="super_admin">최고관리자</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">상태</label>
-                                <div class="form-switch">
-                                    <input type="checkbox" name="is_active" id="userActive" checked>
-                                    <label for="userActive">활성 상태</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 역할별 추가 정보 -->
-                    <div id="studentFields" class="form-section role-fields" style="display: none;">
-                        <h6 class="section-title">학생 정보</h6>
-                        <div class="form-grid grid-3">
-                            <div class="form-group">
-                                <label class="form-label">학번</label>
-                                <input type="text" class="form-input" name="student_id">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">학년</label>
-                                <select class="form-select" name="grade">
-                                    <option value="">선택</option>
-                                    <option value="1">1학년</option>
-                                    <option value="2">2학년</option>
-                                    <option value="3">3학년</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">반</label>
-                                <input type="number" class="form-input" name="class_number" min="1">
-                            </div>
-                        </div>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">연락처</label>
-                                <input type="tel" class="form-input" name="phone">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">보호자 연락처</label>
-                                <input type="tel" class="form-input" name="parent_phone">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="teacherFields" class="form-section role-fields" style="display: none;">
-                        <h6 class="section-title">교사 정보</h6>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">직원번호</label>
-                                <input type="text" class="form-input" name="employee_id">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">담당교과</label>
-                                <input type="text" class="form-input" name="subject">
-                            </div>
-                        </div>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">담당업무</label>
-                                <input type="text" class="form-input" name="responsibility">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">직위</label>
-                                <input type="text" class="form-input" name="position" value="교사">
-                            </div>
-                        </div>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">소속부서</label>
-                                <input type="text" class="form-input" name="department">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">연락처</label>
-                                <input type="tel" class="form-input" name="teacher_phone">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="userCancelBtn" onclick="closeUserModal()">취소</button>
-                    <button type="submit" class="btn btn-primary" id="userSubmitBtn">
-                        <i class="fas fa-save me-1"></i>사용자 추가
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
+{% block extra_css %}
 <style>
+/* 햄버거 메뉴 버튼 */
+.hamburger-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1050;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.hamburger-btn::before {
+    content: "☰";
+    font-size: 20px;
+}
+
+.hamburger-btn:hover {
+    background: #5a67d8;
+    transform: translateY(-1px);
+}
+
+/* 사이드바 오버레이 */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.sidebar-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 사이드바 */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100vh;
+    background: white;
+    border-right: 1px solid #e9ecef;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 1045;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    overflow-y: auto;
+}
+
+.sidebar.show {
+    transform: translateX(0);
+}
+
+.sidebar-header {
+    padding: 70px 20px 24px 20px;
+    border-bottom: 1px solid #e9ecef;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-align: center;
+    position: relative;
+}
+
+.sidebar-header .user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.sidebar-header .user-role {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffd700;
+}
+
+.sidebar-header .user-name {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.sidebar-header .user-email {
+    font-size: 12px;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 12px;
+}
+
+.sidebar-header .logout-btn {
+    color: white;
+    background: rgba(255,255,255,0.2);
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.sidebar-header .logout-btn:hover {
+    background: rgba(255,255,255,0.3);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.sidebar-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.sidebar-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.nav-item {
+    padding: 16px 24px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    color: #495057;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    margin: 2px 12px;
+    border-radius: 6px;
+}
+
+.nav-item:hover {
+    background-color: #f8f9fa;
+    color: #667eea;
+}
+
+.nav-item.active {
+    background-color: #667eea;
+    color: white;
+}
+
+.nav-item i {
+    width: 20px;
+    margin-right: 10px;
+}
+
+/* 메인 컨텐츠 */
+.main-content {
+    min-height: 100vh;
+    background-color: #f8f9fa;
+    padding: 30px;
+    margin-left: 0 !important;
+    transition: none !important;
+}
+
+.content-area {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* 사용자 관리 페이지 스타일 */
+.page-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.page-header h2 {
+    color: #2d3748;
+    margin-bottom: 8px;
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.subtitle {
+    color: #718096;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
 /* ==================== 향상된 모달 시스템 ==================== */
 
 /* 모달 오버레이 */
@@ -322,14 +295,12 @@
     overflow-y: auto;
     flex: 1;
     min-height: 0;
-    max-height: calc(90vh - 140px); /* 헤더와 푸터 높이 제외 */
+    max-height: calc(90vh - 140px);
     
-    /* 스크롤바 스타일링 */
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 #f1f5f9;
 }
 
-/* 웹킷 브라우저용 스크롤바 스타일 */
 .modal-content::-webkit-scrollbar {
     width: 6px;
 }
@@ -527,53 +498,6 @@
     border: 1px solid #e2e8f0;
 }
 
-/* 반응형 */
-@media (max-width: 768px) {
-    .modal-overlay {
-        padding: 10px;
-        align-items: flex-start;
-        padding-top: 20px;
-    }
-    
-    .modal-container {
-        max-width: 100%;
-        max-height: calc(100vh - 40px);
-        height: auto;
-    }
-    
-    .modal-card {
-        max-height: calc(100vh - 40px);
-    }
-    
-    .modal-content {
-        max-height: calc(100vh - 200px); /* 모바일에서 헤더와 푸터 높이 제외 */
-        padding: 20px;
-    }
-    
-    .modal-header,
-    .modal-footer {
-        padding-left: 20px;
-        padding-right: 20px;
-    }
-    
-    .form-grid,
-    .form-grid.grid-3 {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-    
-    .modal-footer {
-        flex-direction: column-reverse;
-    }
-    
-    .btn {
-        width: 100%;
-        justify-content: center;
-    }
-}
-
-/* ==================== 기존 통계 그리드 스타일 ==================== */
-
 /* 통계 그리드 */
 .stats-grid {
     display: grid;
@@ -657,6 +581,16 @@
 
 /* 반응형 */
 @media (max-width: 768px) {
+    .hamburger-btn {
+        top: 15px;
+        left: 15px;
+        padding: 10px;
+    }
+    
+    .main-content {
+        padding: 20px;
+    }
+    
     .stats-grid {
         grid-template-columns: 1fr;
     }
@@ -671,7 +605,48 @@
         min-width: auto;
     }
     
-    /* 테이블 모바일 최적화 */
+    .modal-overlay {
+        padding: 10px;
+        align-items: flex-start;
+        padding-top: 20px;
+    }
+    
+    .modal-container {
+        max-width: 100%;
+        max-height: calc(100vh - 40px);
+        height: auto;
+    }
+    
+    .modal-card {
+        max-height: calc(100vh - 40px);
+    }
+    
+    .modal-content {
+        max-height: calc(100vh - 200px);
+        padding: 20px;
+    }
+    
+    .modal-header,
+    .modal-footer {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    
+    .form-grid,
+    .form-grid.grid-3 {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .modal-footer {
+        flex-direction: column-reverse;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
     .table-responsive {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -679,7 +654,7 @@
     }
     
     .table {
-        min-width: 800px; /* 최소 너비 설정으로 스크롤 유도 */
+        min-width: 800px;
         margin-bottom: 0;
     }
     
@@ -702,7 +677,6 @@
         background-color: #f8fafc;
     }
     
-    /* 액션 버튼 컬럼은 항상 보이도록 */
     .table th:last-child,
     .table td:last-child {
         position: sticky;
@@ -728,14 +702,8 @@
     }
 }
 
-/* 기타 스타일 */
 .action-buttons .btn {
     margin-right: 5px;
-}
-
-.role-fields {
-    border-top: 1px solid #dee2e6;
-    padding-top: 15px;
 }
 
 .loading-row td {
@@ -743,17 +711,279 @@
     padding: 40px 0;
 }
 </style>
+{% endblock %}
 
+{% block content %}
+<!-- 햄버거 메뉴 버튼 -->
+<button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()">
+</button>
+
+<!-- 사이드바 오버레이 -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- 사이드바 네비게이션 -->
+<div class="sidebar" id="sidebar">
+    <button class="sidebar-close" onclick="closeSidebar()">
+        <i class="fas fa-times"></i>
+    </button>
+    <div class="sidebar-header">
+        <div class="user-info">
+            <span class="user-role">{{ user.get_role_name() }}</span>
+            <span class="user-name">{{ user.name }}</span>
+            <span class="user-email">{{ user.email }}</span>
+            <div class="user-actions">
+                <a href="{{ url_for('auth.logout') }}" class="logout-btn">로그아웃</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="navigation">
+        {% for item in navigation_items %}
+        <div class="nav-item {{ 'active' if item.active else '' }}" 
+             onclick="window.location.href='{{ item.url }}'">
+            <i class="{{ item.icon }}"></i>
+            {{ item.title }}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- 메인 컨텐츠 -->
+<main class="main-content">
+    <div class="content-area">
+     
+        <!-- 통계 정보 -->
+        <div class="stats-grid mb-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-primary">👥</div>
+                <div class="stat-info">
+                    <div class="stat-number" id="totalUsers">0</div>
+                    <div class="stat-label">전체 사용자</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-info">🎓</div>
+                <div class="stat-info">
+                    <div class="stat-number" id="totalStudents">0</div>
+                    <div class="stat-label">학생</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-warning">👨‍🏫</div>
+                <div class="stat-info">
+                    <div class="stat-number" id="totalTeachers">0</div>
+                    <div class="stat-label">교사</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-dark">👤</div>
+                <div class="stat-info">
+                    <div class="stat-number" id="totalAdmins">0</div>
+                    <div class="stat-label">관리자</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 검색 및 필터 -->
+        <div class="search-filter-row mb-4">
+            <div class="search-input">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" id="userSearch" placeholder="이름 또는 이메일로 검색..." onkeyup="searchUsers()">
+                </div>
+            </div>
+            <div class="filter-select">
+                <select class="form-select" id="roleFilter" onchange="filterUsers()">
+                    <option value="">모든 역할</option>
+                    <option value="student">학생</option>
+                    <option value="teacher">교사</option>
+                    <option value="admin">관리자</option>
+                    <option value="super_admin">최고관리자</option>
+                </select>
+            </div>
+            <div class="filter-select">
+                <select class="form-select" id="statusFilter" onchange="filterUsers()">
+                    <option value="">모든 상태</option>
+                    <option value="true">활성</option>
+                    <option value="false">비활성</option>
+                </select>
+            </div>
+            <div class="add-user-btn">
+                <button class="btn btn-primary" onclick="openUserModal()">
+                    <i class="fas fa-user-plus me-2"></i>사용자 추가
+                </button>
+            </div>
+        </div>
+
+        <!-- 사용자 목록 테이블 -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>프로필</th>
+                                <th>이름</th>
+                                <th>이메일</th>
+                                <th>역할</th>
+                                <th>상태</th>
+                                <th>가입일</th>
+                                <th>마지막 로그인</th>
+                                <th>작업</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <div class="mt-2">사용자 목록을 불러오는 중...</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- 사용자 편집 모달 -->
+<div class="modal-overlay" id="userModal" style="display: none;">
+    <div class="modal-container">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userModalTitle">
+                    <i class="fas fa-user-plus me-2"></i>새 사용자 추가
+                </h5>
+                <button type="button" class="modal-close-btn" onclick="closeUserModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="userForm">
+                <input type="hidden" name="user_id" id="userId">
+                <input type="hidden" name="mode" id="formMode" value="add">
+                
+                <div class="modal-content">
+                    <div class="form-section">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">이메일 *</label>
+                                <input type="email" class="form-input" name="email" id="userEmail" required>
+                                <div class="form-help" id="emailHelpText">Google 계정 이메일을 입력하세요</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">이름 *</label>
+                                <input type="text" class="form-input" name="name" id="userName" required>
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">역할 *</label>
+                                <select class="form-select" name="role" id="userRole" required onchange="toggleRoleFields()">
+                                    <option value="">역할을 선택하세요</option>
+                                    <option value="student">학생</option>
+                                    <option value="teacher">교사</option>
+                                    <option value="admin">관리자</option>
+                                    <option value="super_admin">최고관리자</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">상태</label>
+                                <div class="form-switch">
+                                    <input type="checkbox" name="is_active" id="userActive" checked>
+                                    <label for="userActive">활성 상태</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 역할별 추가 정보 -->
+                    <div id="studentFields" class="form-section role-fields" style="display: none;">
+                        <h6 class="section-title">학생 정보</h6>
+                        <div class="form-grid grid-3">
+                            <div class="form-group">
+                                <label class="form-label">학번</label>
+                                <input type="text" class="form-input" name="student_id">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">학년</label>
+                                <select class="form-select" name="grade">
+                                    <option value="">선택</option>
+                                    <option value="1">1학년</option>
+                                    <option value="2">2학년</option>
+                                    <option value="3">3학년</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">반</label>
+                                <input type="number" class="form-input" name="class_number" min="1">
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">연락처</label>
+                                <input type="tel" class="form-input" name="phone">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">보호자 연락처</label>
+                                <input type="tel" class="form-input" name="parent_phone">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="teacherFields" class="form-section role-fields" style="display: none;">
+                        <h6 class="section-title">교사 정보</h6>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">직원번호</label>
+                                <input type="text" class="form-input" name="employee_id">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">담당교과</label>
+                                <input type="text" class="form-input" name="subject">
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">담당업무</label>
+                                <input type="text" class="form-input" name="responsibility">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">직위</label>
+                                <input type="text" class="form-input" name="position" value="교사">
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">소속부서</label>
+                                <input type="text" class="form-input" name="department">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">연락처</label>
+                                <input type="tel" class="form-input" name="teacher_phone">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="userCancelBtn" onclick="closeUserModal()">취소</button>
+                    <button type="submit" class="btn btn-primary" id="userSubmitBtn">
+                        <i class="fas fa-save me-1"></i>사용자 추가
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
 <script>
-// AJAX 재로드 시 스크립트 중복 방지
-(function() {
-    'use strict';
-    
-    // 로컬 스코프 변수
-    let allUsers = [];
-    let filteredUsers = [];
-    
-    // 재시도 로직이 있는 안전한 API 호출 함수
+// 재시도 로직이 있는 안전한 API 호출 함수
 function safeApiCall(url, options = {}, retries = 3, delay = 1000) {
     return new Promise((resolve, reject) => {
         const attemptCall = (attempt) => {
@@ -790,14 +1020,20 @@ function safeApiCall(url, options = {}, retries = 3, delay = 1000) {
     });
 }
 
-// AJAX로 로드될 때 즉시 초기화
-loadUsers();
+// 전역 변수
+let allUsers = [];
+let filteredUsers = [];
 
-// 사용자 목록 로드 (재시도 로직 적용)
+// 페이지 로드 시 사용자 목록 로드
+document.addEventListener('DOMContentLoaded', function() {
+    loadUsers();
+});
+
+// 사용자 목록 로드
 function loadUsers() {
     safeApiCall('/dashboard/api/users')
         .then(data => {
-            console.log('API Response:', data); // 디버깅용
+            console.log('API Response:', data);
             
             if (data.success) {
                 allUsers = data.users || [];
@@ -932,9 +1168,8 @@ function openUserModal() {
     showModal();
 }
 
-// 사용자 편집 모달 열기 (재시도 로직 적용)
+// 사용자 편집 모달 열기
 function editUser(userId) {
-    // 서버에서 상세 정보 가져오기 (프로필 정보 포함)
     safeApiCall(`/dashboard/api/users/${userId}`)
         .then(data => {
             if (!data.success || !data.user) {
@@ -1061,7 +1296,7 @@ document.getElementById('userForm').addEventListener('submit', function(e) {
         is_active: formData.get('is_active') === 'on'
     };
     
-    // 역할별 추가 데이터 (추가 및 수정 모드 모두)
+    // 역할별 추가 데이터
     if (userData.role === 'student') {
         const studentProfile = {
             student_id: formData.get('student_id'),
@@ -1071,7 +1306,6 @@ document.getElementById('userForm').addEventListener('submit', function(e) {
             parent_phone: formData.get('parent_phone')
         };
         
-        // 빈 값 제거 (null이나 빈 문자열인 경우 제거)
         Object.keys(studentProfile).forEach(key => {
             if (studentProfile[key] === null || studentProfile[key] === '' || studentProfile[key] === undefined) {
                 delete studentProfile[key];
@@ -1091,7 +1325,6 @@ document.getElementById('userForm').addEventListener('submit', function(e) {
             phone: formData.get('teacher_phone')
         };
         
-        // 빈 값 제거 (null이나 빈 문자열인 경우 제거)
         Object.keys(teacherProfile).forEach(key => {
             if (teacherProfile[key] === null || teacherProfile[key] === '' || teacherProfile[key] === undefined) {
                 delete teacherProfile[key];
@@ -1138,7 +1371,6 @@ document.getElementById('userForm').addEventListener('submit', function(e) {
     });
 });
 
-
 // 사용자 삭제
 function deleteUser(userId, userName) {
     if (!confirm(`정말로 "${userName}" 사용자를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
@@ -1161,6 +1393,30 @@ function deleteUser(userId, userName) {
         showError('사용자 삭제 중 오류가 발생했습니다.');
     });
 }
+
+// 사이드바 토글 함수
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    
+    sidebar.classList.toggle('show');
+    overlay.classList.toggle('show');
+}
+
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    
+    sidebar.classList.remove('show');
+    overlay.classList.remove('show');
+}
+
+// ESC 키로 사이드바 닫기
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeSidebar();
+    }
+});
 
 // 유틸리티 함수들
 function getRoleBadgeClass(role) {
@@ -1200,12 +1456,10 @@ function escapeHtml(unsafe) {
 }
 
 function showSuccess(message) {
-    // 임시로 alert 사용 (나중에 토스트로 교체 가능)
     alert('✅ ' + message);
 }
 
 function showError(message) {
-    // 임시로 alert 사용 (나중에 토스트로 교체 가능)
     alert('❌ ' + message);
 }
 
@@ -1241,29 +1495,16 @@ function handleModalEscape(e) {
     }
 }
 
-    // 모달 오버레이 클릭 이벤트 (setTimeout으로 DOM 준비 대기)
-    setTimeout(function() {
-        const modal = document.getElementById('userModal');
-        if (modal) {
-            modal.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeUserModal();
-                }
-            });
-        }
-    }, 100);
-    
-    // 전역 함수로 노출 (HTML onclick에서 호출되므로)
-    window.openUserModal = openUserModal;
-    window.editUser = editUser;
-    window.deleteUser = deleteUser;
-    window.searchUsers = searchUsers;
-    window.filterUsers = filterUsers;
-    window.resetFilters = resetFilters;
-    window.closeUserModal = closeUserModal;
-    
-    // AJAX로 로드될 때 즉시 초기화
-    loadUsers();
-    
-})(); // 즉시 실행 함수
+// 모달 오버레이 클릭 이벤트
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('userModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeUserModal();
+            }
+        });
+    }
+});
 </script>
+{% endblock %}

@@ -1,0 +1,674 @@
+{% extends "base.html" %}
+
+{% block title %}학급 관리{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 햄버거 메뉴 버튼 */
+.hamburger-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1050;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.hamburger-btn::before {
+    content: "☰";
+    font-size: 20px;
+}
+
+.hamburger-btn:hover {
+    background: #5a67d8;
+    transform: translateY(-1px);
+}
+
+/* 사이드바 오버레이 */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.sidebar-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 사이드바 */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100vh;
+    background: white;
+    border-right: 1px solid #e9ecef;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 1045;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    overflow-y: auto;
+}
+
+.sidebar.show {
+    transform: translateX(0);
+}
+
+.sidebar-header {
+    padding: 70px 20px 24px 20px;
+    border-bottom: 1px solid #e9ecef;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-align: center;
+    position: relative;
+}
+
+.sidebar-header .user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.sidebar-header .user-role {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffd700;
+}
+
+.sidebar-header .user-name {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.sidebar-header .user-email {
+    font-size: 12px;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 12px;
+}
+
+.sidebar-header .logout-btn {
+    color: white;
+    background: rgba(255,255,255,0.2);
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.sidebar-header .logout-btn:hover {
+    background: rgba(255,255,255,0.3);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.sidebar-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.sidebar-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.nav-item {
+    padding: 16px 24px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    color: #495057;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    margin: 2px 12px;
+    border-radius: 6px;
+}
+
+.nav-item:hover {
+    background-color: #f8f9fa;
+    color: #667eea;
+}
+
+.nav-item.active {
+    background-color: #667eea;
+    color: white;
+}
+
+.nav-item i {
+    width: 20px;
+    margin-right: 10px;
+}
+
+/* 메인 컨텐츠 */
+.main-content {
+    min-height: 100vh;
+    background-color: #f8f9fa;
+    padding: 30px;
+    margin-left: 0 !important;
+    transition: none !important;
+}
+
+.content-area {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* 학급 관리 페이지 스타일 */
+.page-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.page-header h2 {
+    color: #2d3748;
+    margin-bottom: 8px;
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.subtitle {
+    color: #718096;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.welcome-card {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(16, 185, 129, 0.3);
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.welcome-card h3 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.welcome-card p {
+    font-size: 1.1rem;
+    margin-bottom: 0;
+    opacity: 0.9;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 30px;
+}
+
+.feature-card {
+    background: white;
+    padding: 32px;
+    border-radius: 12px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 25px rgba(0,0,0,0.12);
+}
+
+.feature-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    color: #10b981;
+}
+
+.feature-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 12px;
+}
+
+.feature-description {
+    color: #718096;
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+.management-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 24px;
+    margin-bottom: 30px;
+}
+
+.management-card {
+    background: white;
+    padding: 28px;
+    border-radius: 12px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+}
+
+.management-card h4 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.management-card .icon {
+    font-size: 1.8rem;
+    color: #10b981;
+}
+
+.management-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.management-list li {
+    padding: 12px 0;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.management-list li:last-child {
+    border-bottom: none;
+}
+
+.management-list li::before {
+    content: "✓";
+    color: #10b981;
+    font-weight: bold;
+    width: 20px;
+}
+
+.class-stats {
+    background: white;
+    padding: 32px;
+    border-radius: 12px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+    margin-top: 30px;
+}
+
+.class-stats h4 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #10b981;
+    margin-bottom: 6px;
+}
+
+.stat-label {
+    color: #718096;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-outline {
+    background: transparent;
+    color: #10b981;
+    border: 2px solid #10b981;
+}
+
+.btn-outline:hover {
+    background: #10b981;
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .hamburger-btn {
+        top: 15px;
+        left: 15px;
+        padding: 10px;
+    }
+    
+    .main-content {
+        padding: 20px;
+    }
+    
+    .page-header h2 {
+        font-size: 1.8rem;
+    }
+    
+    .welcome-card {
+        padding: 24px;
+    }
+    
+    .welcome-card h3 {
+        font-size: 1.4rem;
+    }
+    
+    .welcome-card p {
+        font-size: 1rem;
+    }
+    
+    .feature-grid,
+    .management-sections {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .feature-card,
+    .management-card,
+    .class-stats {
+        padding: 24px;
+    }
+    
+    .feature-icon {
+        font-size: 2.5rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .btn {
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 햄버거 메뉴 버튼 -->
+<button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()">
+</button>
+
+<!-- 사이드바 오버레이 -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- 사이드바 네비게이션 -->
+<div class="sidebar" id="sidebar">
+    <button class="sidebar-close" onclick="closeSidebar()">
+        <i class="fas fa-times"></i>
+    </button>
+    <div class="sidebar-header">
+        <div class="user-info">
+            <span class="user-role">{{ user.get_role_name() }}</span>
+            <span class="user-name">{{ user.name }}</span>
+            <span class="user-email">{{ user.email }}</span>
+            <div class="user-actions">
+                <a href="{{ url_for('auth.logout') }}" class="logout-btn">로그아웃</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="navigation">
+        {% for item in navigation_items %}
+        <div class="nav-item {{ 'active' if item.active else '' }}" 
+             onclick="window.location.href='{{ item.url }}'">
+            <i class="{{ item.icon }}"></i>
+            {{ item.title }}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- 메인 컨텐츠 -->
+<main class="main-content">
+    <div class="content-area">
+        <!-- 페이지 헤더 -->
+        <div class="page-header">
+            <h2>🎓 학급관리</h2>
+            <p class="subtitle">학급 정보와 학생들을 체계적으로 관리하세요</p>
+        </div>
+        
+        <!-- 환영 카드 -->
+        <div class="welcome-card">
+            <h3>학급관리 시스템</h3>
+            <p>효율적인 학급 운영을 위한 통합 관리 도구입니다</p>
+        </div>
+        
+        <!-- 주요 기능 -->
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h4 class="feature-title">학생 관리</h4>
+                <p class="feature-description">학급 내 학생들의 정보를 종합적으로 관리하고 추적합니다</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h4 class="feature-title">성적 관리</h4>
+                <p class="feature-description">시험 성적과 평가 결과를 체계적으로 기록하고 분석합니다</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📅</div>
+                <h4 class="feature-title">출석 관리</h4>
+                <p class="feature-description">일일 출석 현황을 실시간으로 확인하고 관리합니다</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📝</div>
+                <h4 class="feature-title">활동 기록</h4>
+                <p class="feature-description">학급 활동과 특별 프로그램 참여 내역을 기록합니다</p>
+            </div>
+        </div>
+        
+        <!-- 관리 영역 -->
+        <div class="management-sections">
+            <div class="management-card">
+                <h4><span class="icon">👨‍🏫</span>담임 업무</h4>
+                <ul class="management-list">
+                    <li>학급 기본 정보 설정</li>
+                    <li>학생 명단 관리</li>
+                    <li>자리 배치 및 조편성</li>
+                    <li>학부모 연락처 관리</li>
+                    <li>학급 규칙 및 목표 설정</li>
+                </ul>
+            </div>
+            
+            <div class="management-card">
+                <h4><span class="icon">📚</span>학습 관리</h4>
+                <ul class="management-list">
+                    <li>교과별 진도 관리</li>
+                    <li>과제 및 숙제 확인</li>
+                    <li>시험 일정 관리</li>
+                    <li>성적 입력 및 분석</li>
+                    <li>학습 상담 기록</li>
+                </ul>
+            </div>
+            
+            <div class="management-card">
+                <h4><span class="icon">🎯</span>생활 지도</h4>
+                <ul class="management-list">
+                    <li>출석 및 지각 관리</li>
+                    <li>상벌점 기록</li>
+                    <li>상담 일지 작성</li>
+                    <li>특기사항 기록</li>
+                    <li>가정통신문 발송</li>
+                </ul>
+            </div>
+            
+            <div class="management-card">
+                <h4><span class="icon">🏆</span>특별 활동</h4>
+                <ul class="management-list">
+                    <li>동아리 활동 관리</li>
+                    <li>체험학습 계획</li>
+                    <li>학급 행사 준비</li>
+                    <li>봉사활동 기록</li>
+                    <li>수상 및 인증 관리</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 학급 현황 -->
+        <div class="class-stats">
+            <h4>📊 현재 학급 현황</h4>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">--</div>
+                    <div class="stat-label">담당 학급 수</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">--</div>
+                    <div class="stat-label">총 학생 수</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">--%</div>
+                    <div class="stat-label">평균 출석률</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">--</div>
+                    <div class="stat-label">미제출 과제</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 액션 버튼 -->
+        <div class="action-buttons">
+            <button class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                새 학급 등록
+            </button>
+            <button class="btn btn-outline">
+                <i class="fas fa-users"></i>
+                학생 명단 보기
+            </button>
+            <button class="btn btn-outline">
+                <i class="fas fa-chart-bar"></i>
+                통계 보고서
+            </button>
+            <button class="btn btn-outline">
+                <i class="fas fa-cog"></i>
+                설정
+            </button>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 사이드바 토글 함수
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    
+    sidebar.classList.toggle('show');
+    overlay.classList.toggle('show');
+}
+
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    
+    sidebar.classList.remove('show');
+    overlay.classList.remove('show');
+}
+
+// ESC 키로 사이드바 닫기
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeSidebar();
+    }
+});
+
+// 페이지 로드 시 학급 현황 로드 (향후 구현)
+document.addEventListener('DOMContentLoaded', function() {
+    // 학급 관리 기능이 구현되면 여기에 데이터 로딩 로직 추가
+    console.log('학급 관리 페이지가 로드되었습니다.');
+});
+</script>
+{% endblock %}

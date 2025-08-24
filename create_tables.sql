@@ -131,7 +131,7 @@ CREATE TABLE IF NOT EXISTS classes (
     school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
     grade INTEGER CHECK (grade >= 1 AND grade <= 12),
     class_number INTEGER CHECK (class_number >= 1),
-    class_name VARCHAR(100), -- 학급명 (예: 1-1, 컴퓨터과 1반)
+    teacher_name VARCHAR(100), -- 담임교사 명
     teacher_email VARCHAR(255), -- 담임교사 이메일
     room_number VARCHAR(50), -- 교실 번호
     max_students INTEGER DEFAULT 30,
@@ -247,28 +247,28 @@ INSERT INTO schools (name, grade_count, address, phone, email, principal_name, w
 ON CONFLICT DO NOTHING;
 
 -- 샘플 학급 데이터
-INSERT INTO classes (school_id, grade, class_number, class_name, teacher_email, room_number, max_students) VALUES
-((SELECT id FROM schools WHERE name = '대한고등학교'), 1, 1, '1학년 1반', 'teacher1@school.com', '101', 30),
-((SELECT id FROM schools WHERE name = '대한고등학교'), 1, 2, '1학년 2반', 'teacher1@school.com', '102', 30),
-((SELECT id FROM schools WHERE name = '대한고등학교'), 2, 1, '2학년 1반', 'teacher2@school.com', '201', 28),
-((SELECT id FROM schools WHERE name = '대한고등학교'), 2, 2, '2학년 2반', 'teacher2@school.com', '202', 28),
-((SELECT id FROM schools WHERE name = '대한고등학교'), 3, 1, '3학년 1반', 'teacher3@school.com', '301', 25),
-((SELECT id FROM schools WHERE name = '서울과학고등학교'), 1, 1, '과학영재 1반', 'teacher1@school.com', 'S101', 20),
-((SELECT id FROM schools WHERE name = '미래국제고등학교'), 1, 1, '국제 1반', 'teacher2@school.com', 'I101', 25)
+INSERT INTO classes (school_id, grade, class_number, teacher_name, teacher_email, room_number, max_students) VALUES
+((SELECT id FROM schools WHERE name = '대한고등학교'), 1, 1, '김영희', 'teacher1@school.com', '101', 30),
+((SELECT id FROM schools WHERE name = '대한고등학교'), 1, 2, '김영희', 'teacher1@school.com', '102', 30),
+((SELECT id FROM schools WHERE name = '대한고등학교'), 2, 1, '박철수', 'teacher2@school.com', '201', 28),
+((SELECT id FROM schools WHERE name = '대한고등학교'), 2, 2, '박철수', 'teacher2@school.com', '202', 28),
+((SELECT id FROM schools WHERE name = '대한고등학교'), 3, 1, '이미숙', 'teacher3@school.com', '301', 25),
+((SELECT id FROM schools WHERE name = '서울과학고등학교'), 1, 1, '김영희', 'teacher1@school.com', 'S101', 20),
+((SELECT id FROM schools WHERE name = '미래국제고등학교'), 1, 1, '박철수', 'teacher2@school.com', 'I101', 25)
 ON CONFLICT (school_id, grade, class_number) DO NOTHING;
 
 -- 학생-학급 연결 데이터
 INSERT INTO student_classes (student_email, class_id) VALUES
-('student1@school.com', (SELECT id FROM classes WHERE class_name = '1학년 1반' AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교'))),
-('student2@school.com', (SELECT id FROM classes WHERE class_name = '1학년 1반' AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교'))),
-('student3@school.com', (SELECT id FROM classes WHERE class_name = '1학년 1반' AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교'))),
-('student4@school.com', (SELECT id FROM classes WHERE class_name = '1학년 1반' AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교'))),
-('student5@school.com', (SELECT id FROM classes WHERE class_name = '1학년 1반' AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교'))),
-('student6@school.com', (SELECT id FROM classes WHERE class_name = '2학년 1반' AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교'))),
-('student7@school.com', (SELECT id FROM classes WHERE class_name = '2학년 1반' AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교'))),
-('student8@school.com', (SELECT id FROM classes WHERE class_name = '2학년 1반' AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교'))),
-('student9@school.com', (SELECT id FROM classes WHERE class_name = '3학년 1반' AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교'))),
-('student10@school.com', (SELECT id FROM classes WHERE class_name = '3학년 1반' AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교')))
+('student1@school.com', (SELECT id FROM classes WHERE grade = 1 AND class_number = 1 AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교'))),
+('student2@school.com', (SELECT id FROM classes WHERE grade = 1 AND class_number = 1 AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교'))),
+('student3@school.com', (SELECT id FROM classes WHERE grade = 1 AND class_number = 1 AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교'))),
+('student4@school.com', (SELECT id FROM classes WHERE grade = 1 AND class_number = 1 AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교'))),
+('student5@school.com', (SELECT id FROM classes WHERE grade = 1 AND class_number = 1 AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교'))),
+('student6@school.com', (SELECT id FROM classes WHERE grade = 2 AND class_number = 1 AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교'))),
+('student7@school.com', (SELECT id FROM classes WHERE grade = 2 AND class_number = 1 AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교'))),
+('student8@school.com', (SELECT id FROM classes WHERE grade = 2 AND class_number = 1 AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교'))),
+('student9@school.com', (SELECT id FROM classes WHERE grade = 3 AND class_number = 1 AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교'))),
+('student10@school.com', (SELECT id FROM classes WHERE grade = 3 AND class_number = 1 AND school_id = (SELECT id FROM schools WHERE name = '대한고등학교')))
 ON CONFLICT (student_email, class_id) DO NOTHING;
 
 -- =============================================================================

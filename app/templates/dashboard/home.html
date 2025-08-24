@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}대시보드{% endblock %}
+{% block title %}시스템현황{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -171,24 +171,14 @@
     min-height: 100vh;
     background-color: #f8f9fa;
     padding: 30px;
-    margin-left: 0 !important; /* 강제로 좌측 마진 제거 */
-    transition: none !important; /* 트랜지션 효과도 제거 */
+    margin-left: 0 !important;
+    transition: none !important;
 }
 
 .content-area {
     max-width: 1200px;
     margin: 0 auto;
 }
-
-/* 사이드바 열림 상태에서만 헤더와 콘텐츠 조정 - 비활성화 */
-/* body.sidebar-open .main-header .header-container {
-    margin-left: 280px;
-    transition: margin-left 0.3s ease;
-}
-
-body.sidebar-open .main-content {
-    margin-left: 280px;
-} */
 
 /* 시스템 현황 스타일 */
 .system-status-header {
@@ -330,11 +320,7 @@ body.sidebar-open .main-content {
     }
     
     .main-content {
-        padding: 2px;
-    }
-    
-    .page-header {
-        padding: 15px 20px;
+        padding: 20px;
     }
     
     .stats-grid-enhanced {
@@ -393,12 +379,7 @@ body.sidebar-open .main-content {
     <div class="navigation">
         {% for item in navigation_items %}
         <div class="nav-item {{ 'active' if item.active else '' }}" 
-             data-content="{{ item.id }}"
-             {% if item.get('url') %}
-             onclick="window.location.href='{{ item.url }}'"
-             {% else %}
-             onclick="loadContent('{{ item.id }}')"
-             {% endif %}>
+             onclick="window.location.href='{{ item.url }}'">
             <i class="{{ item.icon }}"></i>
             {{ item.title }}
         </div>
@@ -409,10 +390,35 @@ body.sidebar-open .main-content {
 <!-- 메인 컨텐츠 -->
 <main class="main-content">
     <div class="content-area">
-        <!-- 대시보드 인덱스 페이지는 자동으로 홈으로 리다이렉트 -->
-        <div class="welcome-message">
-            <h4>대시보드로 이동합니다...</h4>
-            <p>잠시만 기다려주세요.</p>
+        <div class="stats-grid-enhanced">
+            <div class="stat-card-large">
+                <div class="stat-icon">👥</div>
+                <div class="stat-info">
+                    <div class="stat-number" id="totalUsers">-</div>
+                    <div class="stat-label">전체 사용자</div>
+                </div>
+            </div>
+            <div class="stat-card-large">
+                <div class="stat-icon">🎓</div>
+                <div class="stat-info">
+                    <div class="stat-number" id="totalStudents">-</div>
+                    <div class="stat-label">학생</div>
+                </div>
+            </div>
+            <div class="stat-card-large">
+                <div class="stat-icon">👨‍🏫</div>
+                <div class="stat-info">
+                    <div class="stat-number" id="totalTeachers">-</div>
+                    <div class="stat-label">교사</div>
+                </div>
+            </div>
+            <div class="stat-card-large">
+                <div class="stat-icon">📈</div>
+                <div class="stat-info">
+                    <div class="stat-number" id="utilizationRate">-</div>
+                    <div class="stat-label">이용률</div>
+                </div>
+            </div>
         </div>
     </div>
 </main>
@@ -420,6 +426,112 @@ body.sidebar-open .main-content {
 
 {% block extra_js %}
 <script>
+// 재시도 로직이 있는 안전한 API 호출 함수
+function safeApiCall(url, options = {}, retries = 3, delay = 1000) {
+    return new Promise((resolve, reject) => {
+        const attemptCall = (attempt) => {
+            console.log(`API 호출 시도 ${attempt}/${retries}: ${url}`);
+            
+            fetch(url, {
+                ...options,
+                timeout: 10000 // 10초 타임아웃
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(`API 호출 성공 (시도 ${attempt}):`, data);
+                resolve(data);
+            })
+            .catch(error => {
+                console.error(`API 호출 실패 (시도 ${attempt}):`, error);
+                
+                if (attempt < retries) {
+                    const nextDelay = delay * Math.pow(1.5, attempt - 1); // 지수적 백오프
+                    console.log(`${nextDelay}ms 후 재시도...`);
+                    setTimeout(() => attemptCall(attempt + 1), nextDelay);
+                } else {
+                    reject(error);
+                }
+            });
+        };
+        
+        attemptCall(1);
+    });
+}
+
+// 동적 통계 데이터 로드
+(function() {
+    // DOM이 준비될 때까지 대기
+    function waitForDOM() {
+        const elements = {
+            totalUsers: document.getElementById('totalUsers'),
+            totalStudents: document.getElementById('totalStudents'),
+            totalTeachers: document.getElementById('totalTeachers'),
+            utilizationRate: document.getElementById('utilizationRate')
+        };
+        
+        // 모든 요소가 준비되었는지 확인
+        if (elements.totalUsers && elements.totalStudents && elements.totalTeachers && elements.utilizationRate) {
+            loadAndDisplayStats(elements);
+        } else {
+            setTimeout(waitForDOM, 50);
+        }
+    }
+    
+    // 통계 데이터 로드 및 표시 (재시도 로직 적용)
+    function loadAndDisplayStats(elements) {
+        safeApiCall('/dashboard/api/stats', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin'
+        })
+        .then(data => {
+            if (data.success && data.stats) {
+                // 실제 API 데이터로 업데이트
+                elements.totalUsers.textContent = data.stats.total_users || 0;
+                elements.totalStudents.textContent = data.stats.total_students || 0;
+                elements.totalTeachers.textContent = data.stats.total_teachers || 0;
+                
+                // 이용률 계산 (학생수 기준)
+                const utilizationRate = data.stats.total_students && data.stats.total_users 
+                    ? Math.round((data.stats.total_students / data.stats.total_users) * 100)
+                    : 0;
+                elements.utilizationRate.textContent = utilizationRate + '%';
+            } else {
+                // API 실패 시 기본값
+                elements.totalUsers.textContent = '0';
+                elements.totalStudents.textContent = '0';
+                elements.totalTeachers.textContent = '0';
+                elements.utilizationRate.textContent = '0%';
+            }
+        })
+        .catch(error => {
+            // 연결 실패 시 기본값 및 사용자에게 알림
+            console.error('시스템 통계 데이터 로드 최종 실패:', error);
+            elements.totalUsers.textContent = '오류';
+            elements.totalStudents.textContent = '오류';
+            elements.totalTeachers.textContent = '오류';
+            elements.utilizationRate.textContent = '오류';
+            
+            // 콘솔에 상세 오류 로그
+            console.log('시스템 통계 API 연결에 실패하여 기본값을 표시합니다.');
+        });
+    }
+    
+    // DOM 확인 시작
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', waitForDOM);
+    } else {
+        waitForDOM();
+    }
+})();
+
 // 사이드바 토글 함수
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
@@ -442,12 +554,6 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         closeSidebar();
     }
-});
-
-// 페이지 로드 시 홈 페이지로 자동 리다이렉트
-document.addEventListener('DOMContentLoaded', function() {
-    // 홈 페이지(시스템 현황)로 리다이렉트
-    window.location.href = '/dashboard/';
 });
 </script>
 {% endblock %}
