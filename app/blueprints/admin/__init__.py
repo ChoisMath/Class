@@ -2,4 +2,4 @@ from flask import Blueprint
 
 admin_bp = Blueprint('admin', __name__)
 
-from . import routes, user_management_new
+from . import routes

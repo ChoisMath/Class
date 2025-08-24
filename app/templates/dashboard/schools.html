@@ -779,6 +779,81 @@
     font-size: 2em;
 }
 
+/* ==================== 자동완성 스타일 ==================== */
+.autocomplete-container {
+    position: relative;
+}
+
+.autocomplete-suggestions {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.autocomplete-suggestion {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.autocomplete-suggestion:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-suggestion:hover,
+.autocomplete-suggestion.highlighted {
+    background-color: #f8fafc;
+    color: #667eea;
+}
+
+.autocomplete-suggestion.selected {
+    background-color: #667eea;
+    color: white;
+}
+
+.teacher-name {
+    font-weight: 500;
+    color: #2d3748;
+}
+
+.teacher-email {
+    font-size: 0.875rem;
+    color: #718096;
+}
+
+.autocomplete-suggestion.selected .teacher-name,
+.autocomplete-suggestion.selected .teacher-email {
+    color: white;
+}
+
+.email-input-container {
+    position: relative;
+}
+
+#emailSelector {
+    margin-top: 4px;
+}
+
+.loading-suggestions {
+    padding: 12px 16px;
+    text-align: center;
+    color: #6b7280;
+    font-style: italic;
+}
+
 /* 반응형 */
 @media (max-width: 768px) {
     .hamburger-btn {
@@ -849,6 +924,35 @@
     
     .table {
         min-width: 800px;
+    }
+    
+    /* 자동완성 모바일 최적화 */
+    .autocomplete-suggestions {
+        position: fixed;
+        left: 10px;
+        right: 10px;
+        top: auto;
+        bottom: auto;
+        max-height: 150px;
+    }
+    
+    .autocomplete-suggestion {
+        padding: 10px 12px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    
+    .teacher-name {
+        font-size: 0.875rem;
+    }
+    
+    .teacher-email {
+        font-size: 0.75rem;
+    }
+    
+    #emailSelector {
+        font-size: 0.875rem;
     }
 }
 </style>
@@ -1051,12 +1155,23 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">담임교사 명</label>
-                            <input type="text" class="form-input" name="teacher_name" id="teacherName" placeholder="예: 김영희">
+                            <div class="autocomplete-container" style="position: relative;">
+                                <input type="text" class="form-input" name="teacher_name" id="teacherName" placeholder="예: 김영희" autocomplete="off">
+                                <div class="autocomplete-suggestions" id="teacherNameSuggestions" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; max-height: 200px; overflow-y: auto;"></div>
+                            </div>
                         </div>
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">담임교사 이메일</label>
-                                <input type="email" class="form-input" name="teacher_email" id="classTeacherEmail">
+                                <div class="email-input-container" style="position: relative;">
+                                    <input type="email" class="form-input" name="teacher_email" id="classTeacherEmail">
+                                    <select class="form-select" id="emailSelector" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 999; background: white; border: 2px solid #667eea; border-radius: 8px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+                                        <option value="">이메일을 선택하세요</option>
+                                    </select>
+                                </div>
+                                <small class="form-text text-muted" id="emailHint" style="margin-top: 4px; font-size: 0.8rem; color: #6b7280; display: none;">
+                                    동일한 이름의 교사가 여러 명 있습니다. 적절한 이메일을 선택해주세요.
+                                </small>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">교실번호</label>
@@ -1091,11 +1206,14 @@
     // 로컬 스코프 변수
     let schoolData = null;
     let classes = [];
+    let teachersData = [];
+    let selectedTeacherIndex = -1;
     
     // AJAX 로드 시 즉시 초기화 (DOM이 준비되면 실행)
     setTimeout(function() {
         loadSchoolInfo();
         loadClasses();
+        loadTeachers();
     }, 100);
 
 // 재시도 로직이 있는 안전한 API 호출 함수
@@ -1206,6 +1324,239 @@ function renderSchoolInfo() {
             <div class="school-info-value ${!schoolData.address ? 'empty' : ''}">${schoolData.address || '미입력'}</div>
         </div>
     `;
+}
+
+// 교사 데이터 로드 (재시도 로직 적용)
+function loadTeachers() {
+    console.log('교사 데이터 로드 시작...');
+    
+    safeApiCall('/dashboard/api/users?role=teacher')
+        .then(data => {
+            console.log('교사 데이터:', data);
+            if (data.success) {
+                teachersData = data.users || [];
+                console.log('로드된 교사 수:', teachersData.length);
+                setupTeacherAutocomplete();
+            } else {
+                console.error('교사 데이터 로드 실패:', data);
+                // 실패해도 자동완성 기능은 설정
+                setupTeacherAutocomplete();
+            }
+        })
+        .catch(error => {
+            console.error('교사 데이터 로드 최종 실패:', error);
+            console.log('샘플 교사 데이터로 테스트 진행...');
+            // 테스트용 샘플 데이터
+            teachersData = [
+                {
+                    id: 'teacher-1',
+                    name: '김영희',
+                    email: 'kim.younghee@school.com',
+                    role: 'teacher'
+                },
+                {
+                    id: 'teacher-2', 
+                    name: '김영희',
+                    email: 'younghee.kim@school.com',
+                    role: 'teacher'
+                },
+                {
+                    id: 'teacher-3',
+                    name: '박철수',
+                    email: 'park.chulsoo@school.com', 
+                    role: 'teacher'
+                },
+                {
+                    id: 'teacher-4',
+                    name: '이민정',
+                    email: 'lee.minjeong@school.com',
+                    role: 'teacher'
+                }
+            ];
+            setupTeacherAutocomplete();
+        });
+}
+
+// 교사명 자동완성 기능 설정
+function setupTeacherAutocomplete() {
+    const teacherNameInput = document.getElementById('teacherName');
+    const suggestionsContainer = document.getElementById('teacherNameSuggestions');
+    const emailInput = document.getElementById('classTeacherEmail');
+    const emailSelector = document.getElementById('emailSelector');
+    const emailHint = document.getElementById('emailHint');
+    
+    let debounceTimeout;
+    
+    if (!teacherNameInput) return;
+    
+    // 입력 이벤트 처리 (디바운스 적용)
+    teacherNameInput.addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+            if (query.length >= 1) {
+                showTeacherSuggestions(query, suggestionsContainer, emailInput, emailSelector, emailHint);
+            } else {
+                hideSuggestions(suggestionsContainer);
+                clearEmailField(emailInput, emailSelector, emailHint);
+            }
+        }, 300);
+    });
+    
+    // 키보드 네비게이션
+    teacherNameInput.addEventListener('keydown', function(e) {
+        const suggestions = suggestionsContainer.querySelectorAll('.autocomplete-suggestion');
+        
+        if (suggestions.length === 0) return;
+        
+        switch(e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                selectedTeacherIndex = Math.min(selectedTeacherIndex + 1, suggestions.length - 1);
+                updateSelectionHighlight(suggestions);
+                break;
+                
+            case 'ArrowUp':
+                e.preventDefault();
+                selectedTeacherIndex = Math.max(selectedTeacherIndex - 1, -1);
+                updateSelectionHighlight(suggestions);
+                break;
+                
+            case 'Enter':
+                e.preventDefault();
+                if (selectedTeacherIndex >= 0) {
+                    selectTeacherSuggestion(suggestions[selectedTeacherIndex], emailInput, emailSelector, emailHint, suggestionsContainer);
+                }
+                break;
+                
+            case 'Escape':
+                hideSuggestions(suggestionsContainer);
+                selectedTeacherIndex = -1;
+                break;
+        }
+    });
+    
+    // 외부 클릭 시 자동완성 숨기기
+    document.addEventListener('click', function(e) {
+        if (!teacherNameInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+            hideSuggestions(suggestionsContainer);
+            selectedTeacherIndex = -1;
+        }
+    });
+}
+
+// 교사 제안 표시
+function showTeacherSuggestions(query, container, emailInput, emailSelector, emailHint) {
+    const matches = teachersData.filter(teacher => 
+        teacher.name && teacher.name.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    if (matches.length === 0) {
+        hideSuggestions(container);
+        return;
+    }
+    
+    container.innerHTML = '';
+    selectedTeacherIndex = -1;
+    
+    matches.forEach((teacher, index) => {
+        const suggestion = document.createElement('div');
+        suggestion.className = 'autocomplete-suggestion';
+        suggestion.innerHTML = `
+            <div class="teacher-name">${teacher.name}</div>
+            <div class="teacher-email">${teacher.email}</div>
+        `;
+        
+        suggestion.addEventListener('click', () => {
+            selectTeacherSuggestion(suggestion, emailInput, emailSelector, emailHint, container, teacher);
+        });
+        
+        suggestion.addEventListener('mouseenter', () => {
+            selectedTeacherIndex = index;
+            updateSelectionHighlight(container.querySelectorAll('.autocomplete-suggestion'));
+        });
+        
+        container.appendChild(suggestion);
+    });
+    
+    container.style.display = 'block';
+}
+
+// 교사 제안 선택
+function selectTeacherSuggestion(suggestionElement, emailInput, emailSelector, emailHint, container, teacherData = null) {
+    const teacherName = suggestionElement.querySelector('.teacher-name').textContent;
+    const teacherEmail = suggestionElement.querySelector('.teacher-email').textContent;
+    
+    // 이름 입력 필드 업데이트
+    document.getElementById('teacherName').value = teacherName;
+    
+    // 같은 이름의 교사가 여러 명인지 확인
+    const sameNameTeachers = teachersData.filter(teacher => teacher.name === teacherName);
+    
+    if (sameNameTeachers.length > 1) {
+        // 여러 명인 경우 이메일 선택 드롭다운 표시
+        showEmailSelector(sameNameTeachers, emailSelector, emailHint, teacherEmail);
+        emailInput.value = teacherEmail; // 선택된 이메일을 기본값으로 설정
+    } else {
+        // 한 명인 경우 바로 이메일 입력
+        emailInput.value = teacherEmail;
+        hideEmailSelector(emailSelector, emailHint);
+    }
+    
+    hideSuggestions(container);
+}
+
+// 이메일 선택 드롭다운 표시
+function showEmailSelector(teachers, emailSelector, emailHint, selectedEmail = null) {
+    // 드롭다운 옵션 생성
+    emailSelector.innerHTML = '<option value="">이메일을 선택하세요</option>';
+    
+    teachers.forEach(teacher => {
+        const option = document.createElement('option');
+        option.value = teacher.email;
+        option.textContent = `${teacher.email}`;
+        if (selectedEmail && teacher.email === selectedEmail) {
+            option.selected = true;
+        }
+        emailSelector.appendChild(option);
+    });
+    
+    // 드롭다운과 힌트 표시
+    emailSelector.style.display = 'block';
+    emailHint.style.display = 'block';
+    
+    // 드롭다운 변경 이벤트
+    emailSelector.onchange = function() {
+        document.getElementById('classTeacherEmail').value = this.value;
+        if (this.value) {
+            hideEmailSelector(emailSelector, emailHint);
+        }
+    };
+}
+
+// 이메일 선택 드롭다운 숨기기
+function hideEmailSelector(emailSelector, emailHint) {
+    emailSelector.style.display = 'none';
+    emailHint.style.display = 'none';
+}
+
+// 선택 하이라이트 업데이트
+function updateSelectionHighlight(suggestions) {
+    suggestions.forEach((suggestion, index) => {
+        suggestion.classList.toggle('highlighted', index === selectedTeacherIndex);
+    });
+}
+
+// 제안 숨기기
+function hideSuggestions(container) {
+    container.style.display = 'none';
+}
+
+// 이메일 필드 초기화
+function clearEmailField(emailInput, emailSelector, emailHint) {
+    emailInput.value = '';
+    hideEmailSelector(emailSelector, emailHint);
 }
 
 // 학급 목록 로드 (재시도 로직 적용)
@@ -1561,6 +1912,15 @@ function resetClassForm() {
     document.getElementById('classId').value = '';
     document.getElementById('classFormMode').value = 'add';
     document.getElementById('classMaxStudents').value = '30';
+    
+    // 자동완성 관련 요소 초기화
+    hideSuggestions(document.getElementById('teacherNameSuggestions'));
+    clearEmailField(
+        document.getElementById('classTeacherEmail'),
+        document.getElementById('emailSelector'), 
+        document.getElementById('emailHint')
+    );
+    selectedTeacherIndex = -1;
 }
 
 // 모달 표시

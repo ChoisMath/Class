@@ -8,17 +8,18 @@ from . import dashboard_bp
 @dashboard_bp.route('/')
 @login_required
 def index():
-    """통합 대시보드 메인 페이지 - 홈으로 리다이렉트"""
-    return redirect(url_for('dashboard.home'))
-
-@dashboard_bp.route('/home')
-@login_required
-def home():
-    """시스템 현황 페이지"""
-    navigation_items = get_navigation_items(current_user.role, 'home')
-    return render_template('dashboard/home.html', 
-                         user=current_user,
-                         navigation_items=navigation_items)
+    """통합 대시보드 메인 페이지 - 역할별 리다이렉트"""
+    if current_user.role == 'super_admin':
+        return redirect(url_for('dashboard.users'))
+    elif current_user.role == 'admin':
+        return redirect(url_for('dashboard.schools'))
+    elif current_user.role == 'teacher':
+        return redirect(url_for('dashboard.classes'))
+    elif current_user.role == 'student':
+        return redirect(url_for('dashboard.attendance'))
+    else:
+        # 기본값으로 사용자 관리 페이지
+        return redirect(url_for('dashboard.users'))
 
 def get_navigation_items(role, current_page='home'):
     """역할별 네비게이션 메뉴 구성 - 직접 URL 라우팅"""
@@ -26,17 +27,13 @@ def get_navigation_items(role, current_page='home'):
     
     if role == 'super_admin':
         items = [
-            {'id': 'home', 'title': '시스템현황', 'icon': 'fas fa-chart-line', 'url': '/dashboard/', 'active': current_page == 'home'},
             {'id': 'user_management', 'title': '사용자 관리', 'icon': 'fas fa-users', 'url': '/dashboard/users', 'active': current_page == 'user_management'},
             {'id': 'school_management', 'title': '학교관리', 'icon': 'fas fa-school', 'url': '/dashboard/schools', 'active': current_page == 'school_management'},
             {'id': 'class_management', 'title': '학급관리', 'icon': 'fas fa-chalkboard-teacher', 'url': '/dashboard/classes', 'active': current_page == 'class_management'},
-            {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check', 'url': '/dashboard/attendance', 'active': current_page == 'attendance'},
-            {'id': 'seating', 'title': '자리배치 관리', 'icon': 'fas fa-chair', 'url': '/seating/', 'active': current_page == 'seating'}
+            {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check', 'url': '/dashboard/attendance', 'active': current_page == 'attendance'}
         ]
     elif role == 'admin':
         items = [
-            {'id': 'home', 'title': '시스템현황', 'icon': 'fas fa-chart-line', 'url': '/dashboard/', 'active': current_page == 'home'},
-            {'id': 'user_management', 'title': '사용자 관리', 'icon': 'fas fa-users', 'url': '/dashboard/users', 'active': current_page == 'user_management'},
             {'id': 'school_management', 'title': '학교관리', 'icon': 'fas fa-school', 'url': '/dashboard/schools', 'active': current_page == 'school_management'},
             {'id': 'class_management', 'title': '학급관리', 'icon': 'fas fa-chalkboard-teacher', 'url': '/dashboard/classes', 'active': current_page == 'class_management'},
             {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check', 'url': '/dashboard/attendance', 'active': current_page == 'attendance'},
@@ -44,14 +41,12 @@ def get_navigation_items(role, current_page='home'):
         ]
     elif role == 'teacher':
         items = [
-            {'id': 'home', 'title': '교사 대시보드', 'icon': 'fas fa-tachometer-alt', 'url': '/dashboard/', 'active': current_page == 'home'},
             {'id': 'class_management', 'title': '학급관리', 'icon': 'fas fa-chalkboard-teacher', 'url': '/dashboard/classes', 'active': current_page == 'class_management'},
             {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check', 'url': '/dashboard/attendance', 'active': current_page == 'attendance'},
             {'id': 'seating', 'title': '자리배치 관리', 'icon': 'fas fa-chair', 'url': '/seating/', 'active': current_page == 'seating'}
         ]
     elif role == 'student':
         items = [
-            {'id': 'home', 'title': '학생 대시보드', 'icon': 'fas fa-tachometer-alt', 'url': '/dashboard/', 'active': current_page == 'home'},
             {'id': 'attendance', 'title': '출석체크', 'icon': 'fas fa-calendar-check', 'url': '/dashboard/attendance', 'active': current_page == 'attendance'}
         ]
     
@@ -139,10 +134,10 @@ def attendance():
 def has_page_access(role, page_type):
     """역할별 페이지 접근 권한 체크"""
     access_matrix = {
-        'super_admin': ['home', 'user_management', 'school_management', 'class_management', 'attendance'],
-        'admin': ['home', 'user_management', 'school_management', 'class_management', 'attendance'],
-        'teacher': ['home', 'class_management', 'attendance'],
-        'student': ['home', 'attendance']
+        'super_admin': ['user_management', 'school_management', 'class_management', 'attendance'],
+        'admin': ['school_management', 'class_management', 'attendance'],
+        'teacher': ['class_management', 'attendance'],
+        'student': ['attendance']
     }
     
     return page_type in access_matrix.get(role, [])

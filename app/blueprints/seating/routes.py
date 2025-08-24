@@ -4,7 +4,8 @@ from datetime import datetime, date
 import logging
 
 from app.utils.decorators import role_required
-from app.services.supabase_service import SupabaseService
+from app.services.seating_service import SeatingService
+from app.services.attendance_service import AttendanceService
 from . import seating_bp
 
 logger = logging.getLogger(__name__)
@@ -429,4 +430,193 @@ def save_seat_arrangement():
         return jsonify({
             'success': False,
             'error': '자리배치 저장 중 오류가 발생했습니다.'
+        }), 500
+
+# =============================================================================
+# DSHS-Life 스타일 API 엔드포인트
+# =============================================================================
+
+@seating_bp.route('/api/seats')
+@login_required
+@role_required(['teacher', 'admin', 'super_admin'])
+def get_seats():
+    """자리배치표 불러오기 (DSHS-Life /selfstudy/seats와 동일)"""
+    try:
+        seating_service = SeatingService()
+        
+        # 모든 교실 레이아웃 조회
+        layouts_result = seating_service.get_classroom_layouts()
+        if not layouts_result['success']:
+            return jsonify({
+                'error': 'Classroom layouts not found'
+            }), 404
+        
+        # 자리배치 데이터를 DSHS-Life 형식으로 변환
+        seats = []
+        for layout in layouts_result['layouts']:
+            classroom_key = layout['classroom_key']
+            
+            # 오늘 날짜의 자리배치 조회
+            today = date.today()
+            arrangement_result = seating_service.get_seat_arrangements(classroom_key, str(today))
+            
+            if arrangement_result['success']:
+                arrangements = arrangement_result['arrangements']
+                for position_key, student_emails in arrangements.items():
+                    # DSHS-Life 형식: prefix, snums
+                    seats.append({
+                        'prefix': position_key,
+                        'snums': student_emails  # 학생 이메일 배열
+                    })
+        
+        return jsonify({
+            'seats': seats
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in get_seats: {e}")
+        return jsonify({
+            'error': 'Internal server error'
+        }), 500
+
+@seating_bp.route('/api/missing')
+@login_required
+@role_required(['teacher', 'admin', 'super_admin'])
+def get_missing():
+    """부재 처리된 학생 목록 (DSHS-Life /selfstudy/missing과 동일)"""
+    try:
+        target_date = request.args.get('date', date.today().isoformat())
+        target_date = datetime.strptime(target_date, '%Y-%m-%d').date()
+        
+        attendance_service = AttendanceService()
+        result = attendance_service.get_missing_students(target_date)
+        
+        if result['success']:
+            return jsonify({
+                'items': result['items']  # 교시별 부재 학생 목록
+            })
+        else:
+            return jsonify({
+                'error': result.get('error', 'Failed to fetch missing students')
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Error in get_missing: {e}")
+        return jsonify({
+            'error': 'Internal server error'
+        }), 500
+
+@seating_bp.route('/api/missing', methods=['POST'])
+@login_required
+@role_required(['teacher', 'admin', 'super_admin'])
+def mark_missing():
+    """부재/복귀 처리 (DSHS-Life /selfstudy/missing POST와 동일)"""
+    try:
+        data = request.get_json()
+        
+        action = data.get('action')  # 'miss' or 'return'
+        target_date = data.get('date')
+        period = data.get('period')
+        student_emails = data.get('uids', [])  # DSHS-Life에서는 uids
+        
+        # 입력값 검증
+        if action not in ('miss', 'return'):
+            return jsonify({
+                'error': 'Bad Request'
+            }), 400
+            
+        if not target_date or not period or len(student_emails) == 0:
+            return jsonify({
+                'error': '필수 정보가 누락되었습니다.'
+            }), 400
+        
+        # 날짜 변환
+        target_date = datetime.strptime(target_date, '%Y-%m-%d').date()
+        
+        # 출석 처리
+        attendance_service = AttendanceService()
+        result = attendance_service.mark_attendance_dshs(
+            action=action,
+            target_date=target_date,
+            period=period,
+            student_emails=student_emails,
+            teacher_email=current_user.email
+        )
+        
+        if result['success']:
+            return jsonify({
+                'error': None  # DSHS-Life 응답 형식
+            })
+        else:
+            return jsonify({
+                'error': result.get('error', 'Processing failed')
+            }), 400
+            
+    except Exception as e:
+        logger.error(f"Error in mark_missing: {e}")
+        return jsonify({
+            'error': 'Internal server error'
+        }), 500
+
+@seating_bp.route('/api/config')
+@login_required
+@role_required(['teacher', 'admin', 'super_admin'])
+def get_date_config():
+    """날짜별 교시 설정 조회 (DSHS-Life /config와 동일)"""
+    try:
+        target_date = request.args.get('date', date.today().isoformat())
+        target_date = datetime.strptime(target_date, '%Y-%m-%d').date()
+        
+        seating_service = SeatingService()
+        result = seating_service.get_period_info(target_date)
+        
+        if result['success']:
+            return jsonify({
+                'date': result['date'],
+                'config': result['config'],
+                'periods': result['periods']
+            })
+        else:
+            return jsonify({
+                'error': result.get('error', 'Failed to fetch date config')
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Error in get_date_config: {e}")
+        return jsonify({
+            'error': 'Internal server error'
+        }), 500
+
+@seating_bp.route('/api/supervisor')
+@login_required
+@role_required(['teacher', 'admin', 'super_admin'])
+def get_supervisor():
+    """감독교사 정보 조회 (DSHS-Life /selfstudy/supervisor와 동일)"""
+    try:
+        target_date = request.args.get('date', date.today().isoformat())
+        
+        # 샘플 감독교사 데이터 (실제 구현에서는 DB에서 조회)
+        supervisor_data = [
+            {
+                'grade': 1,
+                'teacher_name': current_user.name,
+                'period': '1차자습',
+                'time': '19:00-20:50'
+            },
+            {
+                'grade': 2,
+                'teacher_name': '박철수',
+                'period': '2차자습',
+                'time': '21:00-22:50'
+            }
+        ]
+        
+        return jsonify({
+            'items': supervisor_data
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in get_supervisor: {e}")
+        return jsonify({
+            'error': 'Internal server error'
         }), 500

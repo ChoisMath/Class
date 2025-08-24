@@ -469,6 +469,232 @@
         justify-content: center;
     }
 }
+
+/* 교사 선택 및 학급 관리 스타일 */
+.teacher-selection-section {
+    margin-bottom: 40px;
+}
+
+.teacher-selection-card,
+.classes-management-card {
+    background: white;
+    padding: 32px;
+    border-radius: 12px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+    margin-bottom: 24px;
+}
+
+.teacher-selection-card h4,
+.classes-management-card h4 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.teacher-selection-card .icon,
+.classes-management-card .icon {
+    font-size: 1.8rem;
+    color: #10b981;
+}
+
+/* 폼 스타일 */
+.form-label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+    font-size: 0.875rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    background: #fff;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.form-input:hover {
+    border-color: #d1d5db;
+}
+
+/* 자동완성 드롭다운 */
+.autocomplete-suggestions {
+    border-top: none !important;
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+}
+
+.autocomplete-suggestion {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.15s ease;
+}
+
+.autocomplete-suggestion:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-suggestion:hover,
+.autocomplete-suggestion.selected {
+    background-color: #f0fdf4;
+    color: #059669;
+}
+
+.autocomplete-suggestion .teacher-name {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.autocomplete-suggestion .teacher-email {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.autocomplete-suggestion.selected .teacher-name {
+    color: #059669;
+}
+
+/* 선택된 교사 정보 카드 */
+.teacher-info-card {
+    background: #f0fdf4;
+    border: 2px solid #10b981;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 16px;
+}
+
+.teacher-info-card h5 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #047857;
+    margin-bottom: 12px;
+}
+
+.teacher-details p {
+    margin-bottom: 8px;
+    color: #374151;
+}
+
+.teacher-details p:last-child {
+    margin-bottom: 0;
+}
+
+.teacher-details strong {
+    color: #047857;
+}
+
+/* 학급 관리 리스트 */
+.teacher-classes-list {
+    margin-bottom: 24px;
+}
+
+.class-item {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.class-item:hover {
+    border-color: #10b981;
+    background: #f0fdf4;
+}
+
+.class-item.selected {
+    border-color: #10b981;
+    background: #f0fdf4;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+}
+
+.class-info {
+    flex: 1;
+}
+
+.class-info .class-name {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 4px;
+}
+
+.class-info .class-details {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.class-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.class-action-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-start;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+/* 빈 상태 메시지 */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6b7280;
+    font-style: italic;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 12px;
+    color: #d1d5db;
+}
+
+/* 로딩 상태 */
+.loading-state {
+    text-align: center;
+    padding: 20px;
+    color: #6b7280;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #e5e7eb;
+    border-radius: 50%;
+    border-top-color: #10b981;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 소형 버튼 스타일 */
+.btn-sm {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+}
 </style>
 {% endblock %}
 
@@ -616,12 +842,68 @@
             </div>
         </div>
         
-        <!-- 액션 버튼 -->
+        {% if user.role == 'super_admin' %}
+        <!-- 교사 선택 및 학급 관리 (super_admin 전용) -->
+        <div class="teacher-selection-section">
+            <div class="teacher-selection-card">
+                <h4><span class="icon">👨‍🏫</span>교사 선택 및 학급 관리</h4>
+                <div class="teacher-search-container">
+                    <div class="autocomplete-container" style="position: relative; margin-bottom: 20px;">
+                        <label for="teacherSelect" class="form-label">담당 교사 선택</label>
+                        <input type="text" 
+                               class="form-input teacher-input" 
+                               id="teacherSelect" 
+                               placeholder="교사 이름을 입력하세요 (예: 김영희)"
+                               autocomplete="off">
+                        <div class="autocomplete-suggestions" 
+                             id="teacherSelectSuggestions" 
+                             style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; max-height: 200px; overflow-y: auto;"></div>
+                    </div>
+                    
+                    <div class="selected-teacher-info" id="selectedTeacherInfo" style="display: none;">
+                        <div class="teacher-info-card">
+                            <h5>선택된 교사 정보</h5>
+                            <div class="teacher-details">
+                                <p><strong>이름:</strong> <span id="selectedTeacherName">-</span></p>
+                                <p><strong>이메일:</strong> <span id="selectedTeacherEmail">-</span></p>
+                                <p><strong>역할:</strong> <span id="selectedTeacherRole">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 선택된 교사의 학급 정보 -->
+            <div class="teacher-classes-section" id="teacherClassesSection" style="display: none;">
+                <div class="classes-management-card">
+                    <h4><span class="icon">🏫</span>담당 학급 관리</h4>
+                    <div id="teacherClassesList">
+                        <!-- 교사의 학급 정보가 여기에 로드됩니다 -->
+                    </div>
+                    
+                    <div class="class-action-buttons">
+                        <button class="btn btn-primary" id="addNewClassBtn">
+                            <i class="fas fa-plus"></i>
+                            새 학급 추가
+                        </button>
+                        <button class="btn btn-outline" id="editSelectedClassBtn" disabled>
+                            <i class="fas fa-edit"></i>
+                            선택한 학급 편집
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- 기본 액션 버튼 -->
         <div class="action-buttons">
+            {% if user.role != 'super_admin' %}
             <button class="btn btn-primary">
                 <i class="fas fa-plus"></i>
                 새 학급 등록
             </button>
+            {% endif %}
             <button class="btn btn-outline">
                 <i class="fas fa-users"></i>
                 학생 명단 보기
@@ -665,10 +947,283 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// 페이지 로드 시 학급 현황 로드 (향후 구현)
+// 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
-    // 학급 관리 기능이 구현되면 여기에 데이터 로딩 로직 추가
     console.log('학급 관리 페이지가 로드되었습니다.');
+    
+    // super_admin 사용자인 경우 교사 선택 기능 초기화
+    if (document.getElementById('teacherSelect')) {
+        initializeTeacherSelection();
+    }
 });
+
+// 교사 선택 기능 초기화
+function initializeTeacherSelection() {
+    const teacherInput = document.getElementById('teacherSelect');
+    const suggestionsContainer = document.getElementById('teacherSelectSuggestions');
+    const selectedTeacherInfo = document.getElementById('selectedTeacherInfo');
+    const teacherClassesSection = document.getElementById('teacherClassesSection');
+    
+    let teacherData = [];
+    let selectedTeacher = null;
+    let debounceTimeout = null;
+    let selectedSuggestionIndex = -1;
+    
+    // 교사 데이터 로드
+    async function loadTeacherData() {
+        try {
+            const response = await fetch('/dashboard/api/users?role=teacher');
+            if (response.ok) {
+                teacherData = await response.json();
+                console.log('교사 데이터 로드 완료:', teacherData.length, '명');
+            } else {
+                console.warn('교사 데이터 로드 실패, 샘플 데이터 사용');
+                teacherData = [
+                    { id: 1, name: '김영희', email: 'kim.younghee@school.com', role: 'teacher' },
+                    { id: 2, name: '이철수', email: 'lee.cheolsu@school.com', role: 'teacher' },
+                    { id: 3, name: '박미영', email: 'park.miyoung@school.com', role: 'teacher' }
+                ];
+            }
+        } catch (error) {
+            console.error('교사 데이터 로드 중 오류:', error);
+            teacherData = [
+                { id: 1, name: '김영희', email: 'kim.younghee@school.com', role: 'teacher' },
+                { id: 2, name: '이철수', email: 'lee.cheolsu@school.com', role: 'teacher' },
+                { id: 3, name: '박미영', email: 'park.miyoung@school.com', role: 'teacher' }
+            ];
+        }
+    }
+    
+    // 교사 검색
+    function searchTeachers(query) {
+        if (!query || query.length < 1) return [];
+        
+        return teacherData.filter(teacher => 
+            teacher.name.toLowerCase().includes(query.toLowerCase())
+        );
+    }
+    
+    // 자동완성 제안 표시
+    function showSuggestions(suggestions) {
+        suggestionsContainer.innerHTML = '';
+        selectedSuggestionIndex = -1;
+        
+        if (suggestions.length === 0) {
+            suggestionsContainer.style.display = 'none';
+            return;
+        }
+        
+        suggestions.forEach((teacher, index) => {
+            const suggestionEl = document.createElement('div');
+            suggestionEl.className = 'autocomplete-suggestion';
+            suggestionEl.innerHTML = `
+                <div class="teacher-name">${teacher.name}</div>
+                <div class="teacher-email">${teacher.email}</div>
+            `;
+            
+            suggestionEl.addEventListener('click', () => {
+                selectTeacher(teacher);
+            });
+            
+            suggestionsContainer.appendChild(suggestionEl);
+        });
+        
+        suggestionsContainer.style.display = 'block';
+    }
+    
+    // 교사 선택
+    function selectTeacher(teacher) {
+        selectedTeacher = teacher;
+        teacherInput.value = teacher.name;
+        suggestionsContainer.style.display = 'none';
+        
+        // 선택된 교사 정보 표시
+        document.getElementById('selectedTeacherName').textContent = teacher.name;
+        document.getElementById('selectedTeacherEmail').textContent = teacher.email;
+        document.getElementById('selectedTeacherRole').textContent = '교사';
+        
+        selectedTeacherInfo.style.display = 'block';
+        
+        // 교사의 학급 정보 로드
+        loadTeacherClasses(teacher.id);
+    }
+    
+    // 교사의 학급 정보 로드
+    async function loadTeacherClasses(teacherId) {
+        const teacherClassesList = document.getElementById('teacherClassesList');
+        teacherClassesList.innerHTML = '<div class="loading-state"><div class="loading-spinner"></div> 학급 정보를 불러오는 중...</div>';
+        teacherClassesSection.style.display = 'block';
+        
+        try {
+            // API 호출 시뮬레이션 (실제로는 백엔드 API 호출)
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // 샘플 학급 데이터
+            const sampleClasses = [
+                { id: 1, name: '3-1반', grade: 3, class_num: 1, student_count: 28 },
+                { id: 2, name: '3-2반', grade: 3, class_num: 2, student_count: 30 }
+            ];
+            
+            displayTeacherClasses(sampleClasses);
+            
+        } catch (error) {
+            console.error('학급 정보 로드 중 오류:', error);
+            teacherClassesList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>학급 정보를 불러오는 중 오류가 발생했습니다.</p>
+                </div>
+            `;
+        }
+    }
+    
+    // 교사의 학급 목록 표시
+    function displayTeacherClasses(classes) {
+        const teacherClassesList = document.getElementById('teacherClassesList');
+        const editBtn = document.getElementById('editSelectedClassBtn');
+        
+        if (classes.length === 0) {
+            teacherClassesList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-clipboard-list"></i>
+                    <p>담당 학급이 없습니다.</p>
+                </div>
+            `;
+            editBtn.disabled = true;
+            return;
+        }
+        
+        teacherClassesList.innerHTML = classes.map(cls => `
+            <div class="class-item" data-class-id="${cls.id}">
+                <div class="class-info">
+                    <div class="class-name">${cls.name}</div>
+                    <div class="class-details">학생 수: ${cls.student_count}명</div>
+                </div>
+                <div class="class-actions">
+                    <button class="btn btn-outline btn-sm edit-class-btn" data-class-id="${cls.id}">
+                        <i class="fas fa-edit"></i>
+                        편집
+                    </button>
+                </div>
+            </div>
+        `).join('');
+        
+        // 학급 선택 이벤트 처리
+        const classItems = teacherClassesList.querySelectorAll('.class-item');
+        classItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                if (e.target.closest('.class-actions')) return;
+                
+                classItems.forEach(i => i.classList.remove('selected'));
+                this.classList.add('selected');
+                editBtn.disabled = false;
+            });
+        });
+        
+        // 편집 버튼 이벤트 처리
+        const editButtons = teacherClassesList.querySelectorAll('.edit-class-btn');
+        editButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const classId = this.dataset.classId;
+                editClass(classId);
+            });
+        });
+    }
+    
+    // 학급 편집
+    function editClass(classId) {
+        alert(`학급 ID ${classId} 편집 기능은 향후 구현될 예정입니다.`);
+    }
+    
+    // 입력 이벤트 처리
+    teacherInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+            if (query.length === 0) {
+                suggestionsContainer.style.display = 'none';
+                selectedTeacherInfo.style.display = 'none';
+                teacherClassesSection.style.display = 'none';
+                selectedTeacher = null;
+                return;
+            }
+            
+            const suggestions = searchTeachers(query);
+            showSuggestions(suggestions);
+        }, 300);
+    });
+    
+    // 키보드 이벤트 처리
+    teacherInput.addEventListener('keydown', function(e) {
+        const suggestions = suggestionsContainer.querySelectorAll('.autocomplete-suggestion');
+        
+        if (suggestions.length === 0) return;
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
+            updateSuggestionSelection(suggestions);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
+            updateSuggestionSelection(suggestions);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (selectedSuggestionIndex >= 0) {
+                const selectedSuggestion = suggestions[selectedSuggestionIndex];
+                const teacherName = selectedSuggestion.querySelector('.teacher-name').textContent;
+                const teacher = teacherData.find(t => t.name === teacherName);
+                if (teacher) {
+                    selectTeacher(teacher);
+                }
+            }
+        } else if (e.key === 'Escape') {
+            suggestionsContainer.style.display = 'none';
+            selectedSuggestionIndex = -1;
+        }
+    });
+    
+    // 제안 선택 표시 업데이트
+    function updateSuggestionSelection(suggestions) {
+        suggestions.forEach((suggestion, index) => {
+            suggestion.classList.toggle('selected', index === selectedSuggestionIndex);
+        });
+    }
+    
+    // 외부 클릭 시 드롭다운 숨기기
+    document.addEventListener('click', function(e) {
+        if (!teacherInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+            suggestionsContainer.style.display = 'none';
+        }
+    });
+    
+    // 새 학급 추가 버튼
+    const addNewClassBtn = document.getElementById('addNewClassBtn');
+    if (addNewClassBtn) {
+        addNewClassBtn.addEventListener('click', function() {
+            if (!selectedTeacher) {
+                alert('먼저 교사를 선택해주세요.');
+                return;
+            }
+            alert(`${selectedTeacher.name} 교사의 새 학급 추가 기능은 향후 구현될 예정입니다.`);
+        });
+    }
+    
+    // 선택한 학급 편집 버튼
+    const editSelectedClassBtn = document.getElementById('editSelectedClassBtn');
+    if (editSelectedClassBtn) {
+        editSelectedClassBtn.addEventListener('click', function() {
+            const selectedClassItem = document.querySelector('.class-item.selected');
+            if (selectedClassItem) {
+                const classId = selectedClassItem.dataset.classId;
+                editClass(classId);
+            }
+        });
+    }
+    
+    // 초기 데이터 로드
+    loadTeacherData();
+}
 </script>
 {% endblock %}
